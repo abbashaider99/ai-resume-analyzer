@@ -1,9 +1,9 @@
 import { cn } from "~/lib/utils";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionHeader,
-  AccordionItem,
+    Accordion,
+    AccordionContent,
+    AccordionHeader,
+    AccordionItem,
 } from "./Accordion";
 
 const ScoreBadge = ({ score }: { score: number }) => {
@@ -48,7 +48,7 @@ const CategoryHeader = ({
 }) => {
   return (
       <div className="flex flex-row gap-4 items-center py-2">
-        <p className="text-2xl font-semibold">{title}</p>
+        <p className="text-2xl max-md:text-lg font-semibold">{title}</p>
         <ScoreBadge score={categoryScore} />
       </div>
   );
@@ -69,9 +69,9 @@ const CategoryContent = ({
                       tip.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"
                     }
                     alt="score"
-                    className="size-5"
+                    className="size-5 max-md:size-4"
                 />
-                <p className="text-xl text-gray-500 ">{tip.tip}</p>
+                <p className="text-xl max-md:text-base text-gray-500">{tip.tip}</p>
               </div>
           ))}
         </div>
@@ -94,9 +94,9 @@ const CategoryContent = ({
                             : "/icons/warning.svg"
                       }
                       alt="score"
-                      className="size-5"
+                      className="size-5 max-md:size-4"
                   />
-                  <p className="text-xl font-semibold">{tip.tip}</p>
+                  <p className="text-xl max-md:text-base font-semibold">{tip.tip}</p>
                 </div>
                 <p>{tip.explanation}</p>
               </div>
