@@ -4,7 +4,9 @@ import { Link } from "react-router";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -82,9 +84,9 @@ const Navbar = () => {
 
       {/* Mobile Menu Panel */}
       <div
-        className={`${
-          isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
-        } md:hidden bg-white border-t border-gray-200 transition-all duration-300 ease-in-out`}
+        className={`md:hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen ? 'block max-h-64 opacity-100' : 'hidden max-h-0 opacity-0'
+        } bg-white border-t border-gray-200`}
       >
         <div className="max-w-7xl mx-auto px-4 py-4 space-y-2">
           <Link
