@@ -1,6 +1,6 @@
-import {usePuterStore} from "~/lib/puter";
-import {useEffect} from "react";
-import {useLocation, useNavigate} from "react-router";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { usePuterStore } from "~/lib/puter";
 
 export const meta = () => ([
     { title: 'HireLens | Auth' },
