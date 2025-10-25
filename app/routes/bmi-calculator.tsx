@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Navbar from "~/components/Navbar";
 
 export const meta = () => [
@@ -41,12 +41,29 @@ export default function BMICalculator() {
     weight: "",
   });
 
+  const [wantsAIInsights, setWantsAIInsights] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [result, setResult] = useState<BMIResult | null>(null);
   const [insights, setInsights] = useState<HealthInsights | null>(null);
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  // Check Puter authentication status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        if (typeof window !== 'undefined' && window.puter) {
+          const signedIn = await window.puter.auth.isSignedIn();
+          setIsSignedIn(signedIn);
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
@@ -257,7 +274,12 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
       resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
 
-    await generateHealthInsights(bmiResult);
+    // Only generate AI insights if user opted in
+    if (wantsAIInsights) {
+      await generateHealthInsights(bmiResult);
+    } else {
+      setInsights(null);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -273,6 +295,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
     setFormData({ age: "", gender: "", heightFeet: "", heightInches: "", weight: "" });
     setResult(null);
     setInsights(null);
+    setWantsAIInsights(false);
     setErrors({});
   };
 
@@ -400,6 +423,49 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   {errors.weight && <p className="mt-2 text-xs text-red-600 font-medium">{errors.weight}</p>}
                 </div>
 
+                {/* AI Insights Checkbox */}
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-5 border-2 border-purple-100">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={wantsAIInsights}
+                        onChange={(e) => setWantsAIInsights(e.target.checked)}
+                        className="w-5 h-5 rounded border-2 border-purple-300 text-brand-primary focus:ring-4 focus:ring-brand-primary/20 cursor-pointer transition-all"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base font-bold text-slate-900">Get AI-Powered Health Insights</span>
+                        {!isSignedIn && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-white text-xs font-bold rounded-full">Premium</span>
+                        )}
+                        {isSignedIn && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-white text-xs font-bold rounded-full">Free</span>
+                        )}
+                      </div>
+                      {!isSignedIn && (
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          Receive personalized health recommendations, lifestyle tips, and actionable advice tailored to your BMI results.
+                        </p>
+                      )}
+                      {wantsAIInsights && !isSignedIn && (
+                        <div className="mt-3 flex items-start gap-2 p-3 bg-white/80 backdrop-blur rounded-xl border border-purple-200">
+                          <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-slate-900 mb-1">Puter Sign-In Required</p>
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                              You'll be prompted to sign in with Puter to access AI-powered insights. It's free, secure, and takes just a moment.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                </div>
+
                 <div className="flex gap-4 pt-2">
                   <button
                     type="submit"
@@ -519,6 +585,69 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                         </p>
                       </div>
                     </div>
+                  ) : result && !wantsAIInsights ? (
+                    <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 animate-fade-in">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900">General Health Tips</h2>
+                      </div>
+
+                      <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p className="text-slate-700 leading-relaxed">
+                          {result.category === "Underweight" && "Focus on nutrient-dense foods and consider consulting a healthcare provider about healthy weight gain strategies."}
+                          {result.category === "Normal weight" && "Maintain your healthy weight through balanced nutrition and regular physical activity."}
+                          {result.category === "Overweight" && "Small lifestyle changes can make a big difference. Focus on balanced meals and regular physical activity."}
+                          {result.category === "Obese" && "Consider consulting with a healthcare provider to develop a personalized health improvement plan."}
+                        </p>
+                      </div>
+
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                          <span className="text-2xl">💡</span>
+                          General Wellness Tips
+                        </h3>
+                        <ul className="space-y-3">
+                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <span className="text-slate-700 flex-1">Eat a balanced diet rich in fruits, vegetables, whole grains, and lean proteins</span>
+                          </li>
+                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <span className="text-slate-700 flex-1">Aim for at least 150 minutes of moderate aerobic activity per week</span>
+                          </li>
+                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <span className="text-slate-700 flex-1">Stay hydrated by drinking 8-10 glasses of water daily</span>
+                          </li>
+                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <span className="text-slate-700 flex-1">Get 7-9 hours of quality sleep each night</span>
+                          </li>
+                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <span className="text-slate-700 flex-1">Manage stress through meditation, yoga, or other relaxation techniques</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                        <p className="text-sm text-purple-900 flex items-start gap-2 mb-3">
+                          <span className="text-lg mt-0.5">✨</span>
+                          <span><strong>Want personalized advice?</strong> Check the "Get AI-Powered Health Insights" option above for recommendations tailored specifically to your results!</span>
+                        </p>
+                      </div>
+
+                      <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                        <p className="text-sm text-yellow-800 flex items-start gap-2">
+                          <span className="text-lg mt-0.5">ℹ️</span>
+                          <span><strong>Note:</strong> These are general wellness tips, not medical advice. Please consult with your healthcare provider for personalized guidance.</span>
+                        </p>
+                      </div>
+                    </div>
                   ) : null}
                 </div>
               ) : (
@@ -536,6 +665,229 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               )}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* BMI Information Sections */}
+      <section className="pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-6xl mx-auto space-y-8">
+          
+          {/* What is BMI */}
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-slate-900">What is BMI?</h2>
+            </div>
+            <div className="space-y-4 text-slate-700 leading-relaxed">
+              <p className="text-lg">
+                Body Mass Index (BMI) is a simple screening tool used to categorize individuals into different weight categories based on their height and weight. It's widely used by healthcare professionals as an initial assessment of whether someone's weight falls within a healthy range.
+              </p>
+              <p>
+                BMI was developed in the 19th century by Belgian mathematician Adolphe Quetelet. While it's not a perfect measure of health (it doesn't directly measure body fat or account for factors like muscle mass, bone density, or body composition), it provides a useful starting point for understanding weight-related health risks at a population level.
+              </p>
+              <div className="mt-6 p-5 bg-blue-50 rounded-xl border border-blue-100">
+                <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <span>📊</span>
+                  BMI Categories
+                </h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-blue-400"></span>
+                    <strong>Underweight:</strong> BMI less than 18.5
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-green-400"></span>
+                    <strong>Normal weight:</strong> BMI 18.5 to 24.9
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
+                    <strong>Overweight:</strong> BMI 25 to 29.9
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-400"></span>
+                    <strong>Obese:</strong> BMI 30 or greater
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* BMI Formula */}
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-slate-900">BMI Formula</h2>
+            </div>
+            <div className="space-y-6">
+              <p className="text-slate-700 leading-relaxed">
+                BMI is calculated using a simple mathematical formula that relates your weight to your height. The formula varies slightly depending on whether you use metric or imperial units.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
+                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span>📏</span>
+                    Metric Formula
+                  </h3>
+                  <div className="bg-white p-4 rounded-xl border border-purple-200 mb-3">
+                    <p className="text-center text-xl font-mono font-bold text-slate-900">
+                      BMI = weight (kg) / [height (m)]²
+                    </p>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    <strong>Example:</strong> If you weigh 70 kg and are 1.75 m tall:<br/>
+                    BMI = 70 / (1.75 × 1.75) = 70 / 3.06 = <strong>22.9</strong>
+                  </p>
+                </div>
+
+                <div className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
+                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span>📐</span>
+                    Imperial Formula
+                  </h3>
+                  <div className="bg-white p-4 rounded-xl border border-blue-200 mb-3">
+                    <p className="text-center text-xl font-mono font-bold text-slate-900">
+                      BMI = [weight (lbs) / height (in)²] × 703
+                    </p>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    <strong>Example:</strong> If you weigh 154 lbs and are 69 inches tall:<br/>
+                    BMI = (154 / (69 × 69)) × 703 = 22.7
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Limitations of BMI */}
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-slate-900">Limitations of BMI</h2>
+            </div>
+            <div className="space-y-4 text-slate-700 leading-relaxed">
+              <p>
+                While BMI is a useful screening tool, it's important to understand its limitations. BMI should be considered alongside other factors when assessing health.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4 mt-6">
+                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <span>💪</span>
+                    Muscle Mass
+                  </h3>
+                  <p className="text-sm">
+                    BMI doesn't distinguish between muscle and fat. Athletes with high muscle mass may be classified as overweight despite being very healthy.
+                  </p>
+                </div>
+                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <span>🧬</span>
+                    Body Composition
+                  </h3>
+                  <p className="text-sm">
+                    Two people with the same BMI can have very different body compositions, with varying amounts of fat and muscle.
+                  </p>
+                </div>
+                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <span>👥</span>
+                    Age & Gender
+                  </h3>
+                  <p className="text-sm">
+                    BMI doesn't account for age, gender, or ethnic differences in body composition and health risks.
+                  </p>
+                </div>
+                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <span>📍</span>
+                    Fat Distribution
+                  </h3>
+                  <p className="text-sm">
+                    BMI doesn't indicate where fat is stored. Belly fat carries more health risks than fat stored elsewhere.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 p-5 bg-yellow-50 rounded-xl border border-yellow-200">
+                <p className="text-sm flex items-start gap-2">
+                  <span className="text-lg mt-0.5">💡</span>
+                  <span><strong>Recommendation:</strong> Use BMI as one of several indicators of health. Consider consulting healthcare professionals for a comprehensive health assessment that includes body composition, waist circumference, blood pressure, cholesterol levels, and overall fitness.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Why Track BMI */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl shadow-xl p-8 sm:p-10 border border-green-200">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-slate-900">Why Track Your BMI?</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">✅</span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Early Health Screening</h3>
+                    <p className="text-sm text-slate-600">Identify potential weight-related health risks early</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">📈</span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Track Progress</h3>
+                    <p className="text-sm text-slate-600">Monitor changes in your weight status over time</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Set Goals</h3>
+                    <p className="text-sm text-slate-600">Establish realistic health and fitness objectives</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💬</span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Healthcare Communication</h3>
+                    <p className="text-sm text-slate-600">Facilitate discussions with your healthcare provider</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🔄</span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Lifestyle Awareness</h3>
+                    <p className="text-sm text-slate-600">Gain insight into how lifestyle choices affect your health</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 mb-1">Quick & Easy</h3>
+                    <p className="text-sm text-slate-600">Simple calculation you can do anytime, anywhere</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
     </div>
