@@ -1,10 +1,15 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+import { type RouteConfig, index, prefix, route } from "@react-router/dev/routes";
 
 export default [
-    index("routes/home.tsx"),
-    route('/auth', 'routes/auth.tsx'),
+    index("routes/index.tsx"),
+    route('/about', 'routes/about.tsx'),
     route('/contact', 'routes/contact.tsx'),
-    route('/upload', 'routes/upload.tsx'),
-    route('/resume/:id', 'routes/resume.tsx'),
     route('/wipe', 'routes/wipe.tsx'),
+    
+    ...prefix('/hirelens', [
+        index("routes/hirelens/index.tsx"),
+        route('auth', 'routes/hirelens/auth.tsx'),
+        route('upload', 'routes/hirelens/upload.tsx'),
+        route('resume/:id', 'routes/hirelens/resume.tsx'),
+    ]),
 ] satisfies RouteConfig;

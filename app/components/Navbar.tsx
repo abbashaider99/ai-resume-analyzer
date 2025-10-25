@@ -9,42 +9,45 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
       {/* Constrained container matching main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <img
-              src="/assets/hirelens-logo.png"
-              alt="HireLens"
-              className="h-8 sm:h-10 w-auto transition-transform duration-300 group-hover:scale-105"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const parent = e.currentTarget.parentElement;
-                if (parent) {
-                  const span = document.createElement('span');
-                  span.className = 'text-lg sm:text-xl font-bold text-gray-900';
-                  span.textContent = 'HireLens';
-                  parent.appendChild(span);
-                }
-              }}
-            />
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-105 transition-transform duration-300">
+              AL
+            </div>
+            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent">
+              Abbas Logic
+            </span>
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-5">
             <Link
+              to="/#tools"
+              className="text-gray-700 hover:text-brand-primary font-medium text-base px-3 py-2 rounded-md hover:bg-purple-50 transition-colors duration-200"
+            >
+              Tools
+            </Link>
+            <Link
+              to="/about"
+              className="text-gray-700 hover:text-brand-primary font-medium text-base px-3 py-2 rounded-md hover:bg-purple-50 transition-colors duration-200"
+            >
+              About
+            </Link>
+            <Link
               to="/contact"
-              className="text-gray-700 hover:text-blue-600 font-medium text-base px-3 py-2 rounded-md hover:bg-blue-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              className="text-gray-700 hover:text-brand-primary font-medium text-base px-3 py-2 rounded-md hover:bg-purple-50 transition-colors duration-200"
             >
               Contact
             </Link>
             <Link
-              to="/upload"
+              to="/hirelens"
               className="primary-button w-fit"
             >
-              📄 Upload Resume
+              Get Started
             </Link>
           </div>
 
@@ -53,7 +56,7 @@ const Navbar = () => {
             <button
               onClick={toggleMenu}
               type="button"
-              className="p-2.5 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              className="p-2.5 rounded-md text-gray-700 hover:text-brand-primary hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-colors duration-200"
               aria-expanded={isMenuOpen}
               aria-label="Toggle navigation menu"
             >
@@ -90,18 +93,32 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto px-4 py-4 space-y-2">
           <Link
+            to="/#tools"
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-primary hover:bg-purple-50 transition-colors duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Tools
+          </Link>
+          <Link
+            to="/about"
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-primary hover:bg-purple-50 transition-colors duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            About
+          </Link>
+          <Link
             to="/contact"
-            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-primary hover:bg-purple-50 transition-colors duration-200"
             onClick={() => setIsMenuOpen(false)}
           >
             Contact
           </Link>
           <Link
-            to="/upload"
+            to="/hirelens"
             className="primary-button w-fit"
             onClick={() => setIsMenuOpen(false)}
           >
-            📄 Upload Resume
+            Get Started
           </Link>
         </div>
       </div>

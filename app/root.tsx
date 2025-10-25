@@ -1,10 +1,10 @@
 import {
-    isRouteErrorResponse,
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
+  isRouteErrorResponse,
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
 } from "react-router";
 import Footer from "./components/Footer";
 
@@ -43,7 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="flex flex-col min-h-screen">
         <script src="https://js.puter.com/v2/"></script>
-        <div className="flex-grow flex flex-col">
+        <div className="grow flex flex-col">
           {children}
         </div>
         <Footer />

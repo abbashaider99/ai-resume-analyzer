@@ -3,30 +3,29 @@ import { Link, useNavigate } from "react-router";
 import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
 import { usePuterStore } from "~/lib/puter";
-import type { Route } from "./+types/home";
 
 // --- Reusable Components ---
 const Hero = () => (
-  <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-24 px-4 sm:px-6 lg:px-8">
+  <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 py-24 px-4 sm:px-6 lg:px-8">
     {/* Background Decor */}
-    <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-gradient-to-bl from-blue-100 to-transparent rounded-full opacity-40 blur-3xl"></div>
-    <div className="absolute bottom-0 left-0 w-1/2 h-1/3 bg-gradient-to-tr from-indigo-100 to-transparent rounded-full opacity-40 blur-3xl"></div>
+    <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-gradient-to-bl from-purple-100 to-transparent rounded-full opacity-40 blur-3xl"></div>
+    <div className="absolute bottom-0 left-0 w-1/2 h-1/3 bg-gradient-to-tr from-pink-100 to-transparent rounded-full opacity-40 blur-3xl"></div>
 
     <div className="max-w-4xl mx-auto text-center relative z-10">
       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-4">
         Will Your Resume Pass the ATS?
       </h1>
-      <h2 className="text-3xl sm:text-4xl font-bold text-blue-600 mb-6 tracking-tight">
+      <h2 className="text-3xl sm:text-4xl font-bold text-brand-primary mb-6 tracking-tight">
         Find Out—Free!
       </h2>
       <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto mb-10">
-        HireLens scans your resume, shows what works, what doesn’t, and helps you get noticed—all for free.
+        HireLens scans your resume, shows what works, what doesn't, and helps you get noticed—all for free.
       </p>
       <Link
-        to="/upload"
+        to="/hirelens/upload"
         className="primary-button w-fit"
       >
-        📤 Upload Resume Now
+        Upload Resume Now
       </Link>
     </div>
   </div>
@@ -64,8 +63,8 @@ const HowItWorks = () => (
             key={i}
             className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 text-center"
           >
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-3xl font-bold text-blue-600">{item.icon}</span>
+            <div className="w-20 h-20 bg-gradient-to-br from-purple-50 to-pink-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-3xl font-bold text-brand-primary">{item.icon}</span>
             </div>
             <h3 className="text-xl font-semibold mb-3 text-slate-800">{item.title}</h3>
             <p className="text-slate-600">{item.desc}</p>
@@ -78,12 +77,12 @@ const HowItWorks = () => (
 
 const PrivacyBox = () => (
   <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-    <div className="max-w-4xl mx-auto bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border border-blue-100">
+    <div className="max-w-4xl mx-auto bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl border border-purple-100">
       <div className="flex items-start gap-4 mb-6">
         <div className="flex-shrink-0">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 text-blue-600"
+            className="h-8 w-8 text-brand-primary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -130,7 +129,7 @@ const ResumeGrid = ({ resumes, loading }: { resumes: Resume[]; loading: boolean 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-brand-primary border-solid"></div>
         <p className="mt-6 text-slate-600 text-lg">Analyzing your past uploads...</p>
       </div>
     );
@@ -160,10 +159,10 @@ const ResumeGrid = ({ resumes, loading }: { resumes: Resume[]; loading: boolean 
           Upload your first resume to start getting AI feedback and improve your chances of landing your dream job.
         </p>
         <Link
-          to="/upload"
-          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-full shadow transition-colors"
+          to="/hirelens/upload"
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-primary to-brand-secondary hover:from-purple-700 hover:to-purple-800 text-white font-medium rounded-full shadow transition-colors"
         >
-          📄 Upload Your Resume
+          Upload Your Resume
         </Link>
       </div>
     );
@@ -184,7 +183,7 @@ const ResumeGrid = ({ resumes, loading }: { resumes: Resume[]; loading: boolean 
 };
 
 // --- Main Component ---
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "HireLens - AI Resume Analyzer" },
     { name: "description", content: "Smart feedback for your dream job!" },
@@ -198,7 +197,7 @@ export default function Home() {
   const [loadingResumes, setLoadingResumes] = useState(false);
 
   useEffect(() => {
-    if (!auth.isAuthenticated) navigate("/auth?next=/");
+    if (!auth.isAuthenticated) navigate("/hirelens/auth?next=/hirelens");
   }, [auth.isAuthenticated]);
 
   useEffect(() => {
