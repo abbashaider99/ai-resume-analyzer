@@ -310,10 +310,10 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
             BMI Calculator with <span className="bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent">AI Insights</span>
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
             Calculate your Body Mass Index and get personalized health tips powered by AI
           </p>
         </div>
@@ -324,7 +324,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 border border-gray-100">
               <div className="mb-8">
-                <h2 className="text-3xl font-bold text-slate-900 mb-2">Calculate Your BMI</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Calculate Your BMI</h2>
                 <p className="text-slate-600 text-sm">Enter your details below to get instant health insights</p>
               </div>
               
@@ -499,13 +499,13 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               {result ? (
                 <div ref={resultRef} className="animate-fade-in">
                   <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Your BMI Result</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6">Your BMI Result</h2>
                     
                     <div className="text-center mb-6">
                       <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-2xl mb-4 animate-scale-in">
                         <span className="text-5xl font-bold text-white">{result.bmi.toFixed(1)}</span>
                       </div>
-                      <p className={`text-3xl font-bold ${result.categoryColor} mb-2`}>{result.category}</p>
+                      <p className={`text-2xl sm:text-3xl font-bold ${result.categoryColor} mb-2`}>{result.category}</p>
                       <p className="text-slate-600">{result.healthStatus}</p>
                     </div>
 
@@ -548,7 +548,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-900">AI Health Insights</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">AI Health Insights</h2>
                       </div>
 
                       <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-100">
@@ -556,22 +556,22 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                       </div>
 
                       <div className="mb-6 p-5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl text-white">
-                        <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-                          <span className="text-2xl">⭐</span>
+                        <h3 className="text-base sm:text-lg font-bold mb-2">
                           Your Main Action Step
                         </h3>
-                        <p className="text-lg leading-relaxed">{insights.mainAction}</p>
+                        <p className="text-base sm:text-lg leading-relaxed">{insights.mainAction}</p>
                       </div>
 
                       <div className="mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-                          <span className="text-2xl">💡</span>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3">
                           Personalized Tips for You
                         </h3>
                         <ul className="space-y-3">
                           {insights.tips.map((tip, index) => (
                             <li key={index} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                              <span className="text-green-500 mt-0.5 text-xl">✓</span>
+                              <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
                               <span className="text-slate-700 flex-1">{tip}</span>
                             </li>
                           ))}
@@ -580,7 +580,9 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
 
                       <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
                         <p className="text-sm text-yellow-800 flex items-start gap-2">
-                          <span className="text-lg mt-0.5">ℹ️</span>
+                          <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                           <span><strong>Note:</strong> {insights.disclaimer}</span>
                         </p>
                       </div>
@@ -593,7 +595,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-900">General Health Tips</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">General Health Tips</h2>
                       </div>
 
                       <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
@@ -606,29 +608,38 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                       </div>
 
                       <div className="mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-                          <span className="text-2xl">💡</span>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3">
                           General Wellness Tips
                         </h3>
                         <ul className="space-y-3">
                           <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
                             <span className="text-slate-700 flex-1">Eat a balanced diet rich in fruits, vegetables, whole grains, and lean proteins</span>
                           </li>
                           <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
                             <span className="text-slate-700 flex-1">Aim for at least 150 minutes of moderate aerobic activity per week</span>
                           </li>
                           <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
                             <span className="text-slate-700 flex-1">Stay hydrated by drinking 8-10 glasses of water daily</span>
                           </li>
                           <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
                             <span className="text-slate-700 flex-1">Get 7-9 hours of quality sleep each night</span>
                           </li>
                           <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <span className="text-blue-500 mt-0.5 text-xl">✓</span>
+                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
                             <span className="text-slate-700 flex-1">Manage stress through meditation, yoga, or other relaxation techniques</span>
                           </li>
                         </ul>
@@ -636,14 +647,18 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
 
                       <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
                         <p className="text-sm text-purple-900 flex items-start gap-2 mb-3">
-                          <span className="text-lg mt-0.5">✨</span>
+                          <svg className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
                           <span><strong>Want personalized advice?</strong> Check the "Get AI-Powered Health Insights" option above for recommendations tailored specifically to your results!</span>
                         </p>
                       </div>
 
                       <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
                         <p className="text-sm text-yellow-800 flex items-start gap-2">
-                          <span className="text-lg mt-0.5">ℹ️</span>
+                          <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                           <span><strong>Note:</strong> These are general wellness tips, not medical advice. Please consult with your healthcare provider for personalized guidance.</span>
                         </p>
                       </div>
@@ -680,18 +695,17 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900">What is BMI?</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">What is BMI?</h2>
             </div>
             <div className="space-y-4 text-slate-700 leading-relaxed">
-              <p className="text-lg">
+              <p className="text-base sm:text-lg">
                 Body Mass Index (BMI) is a simple screening tool used to categorize individuals into different weight categories based on their height and weight. It's widely used by healthcare professionals as an initial assessment of whether someone's weight falls within a healthy range.
               </p>
               <p>
                 BMI was developed in the 19th century by Belgian mathematician Adolphe Quetelet. While it's not a perfect measure of health (it doesn't directly measure body fat or account for factors like muscle mass, bone density, or body composition), it provides a useful starting point for understanding weight-related health risks at a population level.
               </p>
               <div className="mt-6 p-5 bg-blue-50 rounded-xl border border-blue-100">
-                <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <span>📊</span>
+                <h3 className="font-bold text-slate-900 mb-2">
                   BMI Categories
                 </h3>
                 <ul className="space-y-2 text-sm">
@@ -724,7 +738,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900">BMI Formula</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">BMI Formula</h2>
             </div>
             <div className="space-y-6">
               <p className="text-slate-700 leading-relaxed">
@@ -733,12 +747,11 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
-                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <span>📏</span>
+                  <h3 className="font-bold text-slate-900 mb-3">
                     Metric Formula
                   </h3>
                   <div className="bg-white p-4 rounded-xl border border-purple-200 mb-3">
-                    <p className="text-center text-xl font-mono font-bold text-slate-900">
+                    <p className="text-center text-base sm:text-xl font-mono font-bold text-slate-900">
                       BMI = weight (kg) / [height (m)]²
                     </p>
                   </div>
@@ -749,12 +762,11 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                 </div>
 
                 <div className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
-                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <span>📐</span>
+                  <h3 className="font-bold text-slate-900 mb-3">
                     Imperial Formula
                   </h3>
                   <div className="bg-white p-4 rounded-xl border border-blue-200 mb-3">
-                    <p className="text-center text-xl font-mono font-bold text-slate-900">
+                    <p className="text-center text-base sm:text-xl font-mono font-bold text-slate-900">
                       BMI = [weight (lbs) / height (in)²] × 703
                     </p>
                   </div>
@@ -775,7 +787,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900">Limitations of BMI</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Limitations of BMI</h2>
             </div>
             <div className="space-y-4 text-slate-700 leading-relaxed">
               <p>
@@ -783,8 +795,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               </p>
               <div className="grid sm:grid-cols-2 gap-4 mt-6">
                 <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <span>💪</span>
+                  <h3 className="font-bold text-slate-900 mb-2">
                     Muscle Mass
                   </h3>
                   <p className="text-sm">
@@ -792,8 +803,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   </p>
                 </div>
                 <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <span>🧬</span>
+                  <h3 className="font-bold text-slate-900 mb-2">
                     Body Composition
                   </h3>
                   <p className="text-sm">
@@ -801,8 +811,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   </p>
                 </div>
                 <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <span>👥</span>
+                  <h3 className="font-bold text-slate-900 mb-2">
                     Age & Gender
                   </h3>
                   <p className="text-sm">
@@ -810,8 +819,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   </p>
                 </div>
                 <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <span>📍</span>
+                  <h3 className="font-bold text-slate-900 mb-2">
                     Fat Distribution
                   </h3>
                   <p className="text-sm">
@@ -821,7 +829,9 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               </div>
               <div className="mt-6 p-5 bg-yellow-50 rounded-xl border border-yellow-200">
                 <p className="text-sm flex items-start gap-2">
-                  <span className="text-lg mt-0.5">💡</span>
+                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
                   <span><strong>Recommendation:</strong> Use BMI as one of several indicators of health. Consider consulting healthcare professionals for a comprehensive health assessment that includes body composition, waist circumference, blood pressure, cholesterol levels, and overall fitness.</span>
                 </p>
               </div>
@@ -836,26 +846,32 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900">Why Track Your BMI?</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Why Track Your BMI?</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">✅</span>
+                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Early Health Screening</h3>
                     <p className="text-sm text-slate-600">Identify potential weight-related health risks early</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">📈</span>
+                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Track Progress</h3>
                     <p className="text-sm text-slate-600">Monitor changes in your weight status over time</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">🎯</span>
+                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Set Goals</h3>
                     <p className="text-sm text-slate-600">Establish realistic health and fitness objectives</p>
@@ -864,21 +880,27 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               </div>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">💬</span>
+                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Healthcare Communication</h3>
                     <p className="text-sm text-slate-600">Facilitate discussions with your healthcare provider</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">🔄</span>
+                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Lifestyle Awareness</h3>
                     <p className="text-sm text-slate-600">Gain insight into how lifestyle choices affect your health</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">⚡</span>
+                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                   <div>
                     <h3 className="font-bold text-slate-900 mb-1">Quick & Easy</h3>
                     <p className="text-sm text-slate-600">Simple calculation you can do anytime, anywhere</p>
