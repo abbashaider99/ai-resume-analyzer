@@ -439,11 +439,6 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                         <span className="text-base font-bold text-slate-900">Get AI-Powered Health Insights</span>
                           <span className="px-2 py-0.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-white text-xs font-bold rounded-full">Free</span>
                       </div>
-                      {!isSignedIn && (
-                        <p className="text-sm text-slate-600 leading-relaxed">
-                          Get personalized health tips and advice based on your BMI.
-                        </p>
-                      )}
                       {wantsAIInsights && !isSignedIn && (
                         <div className="mt-3 flex items-start gap-2 p-3 bg-white/80 backdrop-blur rounded-xl border border-purple-200">
                           <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
