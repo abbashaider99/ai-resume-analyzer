@@ -319,19 +319,19 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
         </div>
       </section>
 
-      <section className="pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 border border-gray-100">
-              <div className="mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Calculate Your BMI</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 lg:p-10 border border-gray-100">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">Calculate Your BMI</h2>
                 <p className="text-slate-600 text-sm">Enter your details below to get instant health insights</p>
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-1">
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-2 gap-3 sm:gap-5">
                   <div>
-                    <label htmlFor="age" className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label htmlFor="age" className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">
                       Age <span className="text-slate-400">(years)</span>
                     </label>
                     <input
@@ -340,14 +340,14 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                       name="age"
                       value={formData.age}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3.5 text-base rounded-xl border-2 ${errors.age ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20'} focus:ring-4 outline-none transition-all bg-gray-50 focus:bg-white`}
+                      className={`w-full px-3 py-2.5 sm:px-4 sm:py-3.5 text-sm sm:text-base rounded-xl border-2 ${errors.age ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20'} focus:ring-4 outline-none transition-all bg-gray-50 focus:bg-white`}
                       placeholder="25"
                     />
                     {errors.age && <p className="mt-2 text-xs text-red-600 font-medium">{errors.age}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="gender" className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label htmlFor="gender" className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">
                       Gender
                     </label>
                     <div className="relative">
@@ -357,15 +357,15 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                         value={formData.gender}
                         onChange={handleInputChange}
                         style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-                        className={`w-full px-4 py-3.5 pr-12 text-base rounded-xl border-2 ${errors.gender ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20'} focus:ring-4 outline-none transition-all bg-gray-50 focus:bg-white cursor-pointer`}
+                        className={`w-full px-3 py-2.5 pr-10 sm:px-4 sm:py-3.5 sm:pr-12 text-sm sm:text-base rounded-xl border-2 ${errors.gender ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20'} focus:ring-4 outline-none transition-all bg-gray-50 focus:bg-white cursor-pointer`}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4 text-slate-400">
+                        <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
@@ -375,29 +375,29 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">
                     Height <span className="text-slate-400">(ft & in)</span>
                   </label>
-                  <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 border-gray-200 bg-gray-50 focus-within:border-brand-primary focus-within:ring-4 focus-within:ring-brand-primary/20 focus-within:bg-white transition-all">
+                  <div className="flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3.5 rounded-xl border-2 border-gray-200 bg-gray-50 focus-within:border-brand-primary focus-within:ring-4 focus-within:ring-brand-primary/20 focus-within:bg-white transition-all">
                     <input
                       type="number"
                       name="heightFeet"
                       value={formData.heightFeet}
                       onChange={handleInputChange}
-                      className="w-16 px-3 py-2 text-base text-center rounded-lg border-2 border-gray-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all bg-white"
+                      className="w-12 sm:w-16 px-2 py-1.5 sm:px-3 sm:py-2 text-sm sm:text-base text-center rounded-lg border-2 border-gray-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all bg-white"
                       placeholder="5"
                     />
-                    <span className="text-slate-600 text-base font-bold">ft</span>
+                    <span className="text-slate-600 text-sm sm:text-base font-bold">ft</span>
                     <input
                       type="number"
                       step="0.1"
                       name="heightInches"
                       value={formData.heightInches}
                       onChange={handleInputChange}
-                      className="w-16 px-3 py-2 text-base text-center rounded-lg border-2 border-gray-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all bg-white"
+                      className="w-12 sm:w-16 px-2 py-1.5 sm:px-3 sm:py-2 text-sm sm:text-base text-center rounded-lg border-2 border-gray-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all bg-white"
                       placeholder="8"
                     />
-                    <span className="text-slate-600 text-base font-bold">in</span>
+                    <span className="text-slate-600 text-sm sm:text-base font-bold">in</span>
                   </div>
                   {(errors.heightFeet || errors.heightInches) && (
                     <p className="mt-2 text-xs text-red-600 font-medium">
@@ -407,7 +407,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                 </div>
 
                 <div>
-                  <label htmlFor="weight" className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label htmlFor="weight" className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">
                     Weight <span className="text-slate-400">(kg)</span>
                   </label>
                   <input
@@ -417,15 +417,15 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                     name="weight"
                     value={formData.weight}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3.5 text-base rounded-xl border-2 ${errors.weight ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20'} focus:ring-4 outline-none transition-all bg-gray-50 focus:bg-white`}
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3.5 text-sm sm:text-base rounded-xl border-2 ${errors.weight ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20'} focus:ring-4 outline-none transition-all bg-gray-50 focus:bg-white`}
                     placeholder="70"
                   />
                   {errors.weight && <p className="mt-2 text-xs text-red-600 font-medium">{errors.weight}</p>}
                 </div>
 
                 {/* AI Insights Checkbox */}
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-5 border-2 border-purple-100">
-                  <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-4 sm:p-5 border-2 border-purple-100">
+                  <label className="flex items-start gap-2 sm:gap-3 cursor-pointer group">
                     <div className="relative flex items-center justify-center mt-0.5">
                       <input
                         type="checkbox"
@@ -466,15 +466,15 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   </label>
                 </div>
 
-                <div className="flex gap-4 pt-2">
+                <div className="flex gap-3 sm:gap-4 pt-2">
                   <button
                     type="submit"
                     disabled={calculating || loading}
-                    className="flex-1 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-4 px-8 text-base rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none active:scale-95"
+                    className="flex-1 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-3 px-4 sm:py-4 sm:px-8 text-sm sm:text-base rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none active:scale-95"
                   >
                     {calculating ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -486,7 +486,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                     <button
                       type="button"
                       onClick={resetCalculator}
-                      className="px-8 py-4 bg-slate-100 text-slate-700 font-bold text-base rounded-2xl hover:bg-slate-200 transition-all hover:shadow-md active:scale-95"
+                      className="px-4 py-3 sm:px-8 sm:py-4 bg-slate-100 text-slate-700 font-bold text-sm sm:text-base rounded-2xl hover:bg-slate-200 transition-all hover:shadow-md active:scale-95"
                     >
                       Reset
                     </button>
@@ -495,7 +495,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
               </form>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {result ? (
                 <div ref={resultRef} className="animate-fade-in">
                   <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
