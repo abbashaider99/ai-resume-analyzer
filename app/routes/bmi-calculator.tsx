@@ -303,8 +303,48 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
       <Navbar />
 
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="relative pt-20 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Animated Lightning Background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="lightning-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.15 }} />
+                <stop offset="50%" style={{ stopColor: '#34d399', stopOpacity: 0.1 }} />
+                <stop offset="100%" style={{ stopColor: '#6ee7b7', stopOpacity: 0.05 }} />
+              </linearGradient>
+            </defs>
+            
+            {/* Lightning bolts - scattered across viewport */}
+            <path className="animate-pulse" d="M 100 -50 L 150 200 L 120 200 L 180 500" 
+                  stroke="url(#lightning-gradient)" strokeWidth="2" fill="none" opacity="0.2"/>
+            <path className="animate-pulse" style={{ animationDelay: '0.5s' }} 
+                  d="M 300 -100 L 320 150 L 290 150 L 340 400" 
+                  stroke="url(#lightning-gradient)" strokeWidth="2" fill="none" opacity="0.15"/>
+            <path className="animate-pulse" style={{ animationDelay: '1s' }} 
+                  d="M 500 50 L 520 250 L 490 250 L 540 500" 
+                  stroke="url(#lightning-gradient)" strokeWidth="2" fill="none" opacity="0.12"/>
+            <path className="animate-pulse" style={{ animationDelay: '1.5s' }} 
+                  d="M 700 -20 L 730 180 L 700 180 L 760 450" 
+                  stroke="url(#lightning-gradient)" strokeWidth="2" fill="none" opacity="0.18"/>
+            <path className="animate-pulse" style={{ animationDelay: '2s' }} 
+                  d="M 900 30 L 920 220 L 890 220 L 950 480" 
+                  stroke="url(#lightning-gradient)" strokeWidth="2" fill="none" opacity="0.15"/>
+            
+            {/* Additional subtle lightning */}
+            <path className="animate-pulse" style={{ animationDelay: '0.3s' }} 
+                  d="M 200 100 L 210 280 L 190 280 L 230 520" 
+                  stroke="url(#lightning-gradient)" strokeWidth="1.5" fill="none" opacity="0.1"/>
+            <path className="animate-pulse" style={{ animationDelay: '1.2s' }} 
+                  d="M 600 80 L 615 270 L 595 270 L 640 510" 
+                  stroke="url(#lightning-gradient)" strokeWidth="1.5" fill="none" opacity="0.12"/>
+            <path className="animate-pulse" style={{ animationDelay: '1.8s' }} 
+                  d="M 800 -10 L 825 200 L 800 200 L 860 470" 
+                  stroke="url(#lightning-gradient)" strokeWidth="1.5" fill="none" opacity="0.1"/>
+          </svg>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mb-4 shadow-lg">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
