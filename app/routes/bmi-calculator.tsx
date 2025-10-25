@@ -498,18 +498,18 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
             <div className="space-y-4 sm:space-y-6">
               {result ? (
                 <div ref={resultRef} className="animate-fade-in">
-                  <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6">Your BMI Result</h2>
+                  <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">Your BMI Result</h2>
                     
-                    <div className="text-center mb-6">
-                      <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-2xl mb-4 animate-scale-in">
-                        <span className="text-5xl font-bold text-white">{result.bmi.toFixed(1)}</span>
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className="inline-flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-2xl mb-3 sm:mb-4 animate-scale-in">
+                        <span className="text-4xl sm:text-5xl font-bold text-white">{result.bmi.toFixed(1)}</span>
                       </div>
-                      <p className={`text-2xl sm:text-3xl font-bold ${result.categoryColor} mb-2`}>{result.category}</p>
-                      <p className="text-slate-600">{result.healthStatus}</p>
+                      <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${result.categoryColor} mb-2`}>{result.category}</p>
+                      <p className="text-sm sm:text-base text-slate-600">{result.healthStatus}</p>
                     </div>
 
-                    <div className={`p-4 rounded-xl border ${result.categoryBgColor} mb-4`}>
+                    <div className={`p-3 sm:p-4 rounded-xl border ${result.categoryBgColor} mb-3 sm:mb-4`}>
                       <div className="flex justify-between text-xs text-slate-600 mb-2">
                         <span>Underweight</span>
                         <span>Normal</span>
@@ -532,55 +532,55 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   </div>
 
                   {loading ? (
-                    <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-                      <div className="flex items-center justify-center py-12">
+                    <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100">
+                      <div className="flex items-center justify-center py-8 sm:py-12">
                         <div className="text-center">
-                          <div className="inline-block w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                          <p className="text-slate-600 font-semibold">Generating your personalized tips...</p>
+                          <div className="inline-block w-10 h-10 sm:w-12 sm:h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-3 sm:mb-4"></div>
+                          <p className="text-sm sm:text-base text-slate-600 font-semibold">Generating your personalized tips...</p>
                         </div>
                       </div>
                     </div>
                   ) : insights ? (
-                    <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 animate-fade-in">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100 animate-fade-in">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">AI Health Insights</h2>
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">AI Health Insights</h2>
                       </div>
 
-                      <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-100">
-                        <p className="text-slate-700 leading-relaxed">{insights.overview}</p>
+                      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 rounded-xl border border-green-100">
+                        <p className="text-sm sm:text-base text-slate-700 leading-relaxed">{insights.overview}</p>
                       </div>
 
-                      <div className="mb-6 p-5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl text-white">
-                        <h3 className="text-base sm:text-lg font-bold mb-2">
+                      <div className="mb-4 sm:mb-6 p-4 sm:p-5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl text-white">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-bold mb-2">
                           Your Main Action Step
                         </h3>
-                        <p className="text-base sm:text-lg leading-relaxed">{insights.mainAction}</p>
+                        <p className="text-sm sm:text-base lg:text-lg leading-relaxed">{insights.mainAction}</p>
                       </div>
 
-                      <div className="mb-6">
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3">
+                      <div className="mb-4 sm:mb-6">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 mb-2 sm:mb-3">
                           Personalized Tips for You
                         </h3>
-                        <ul className="space-y-3">
+                        <ul className="space-y-2 sm:space-y-3">
                           {insights.tips.map((tip, index) => (
-                            <li key={index} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                              <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <li key={index} className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
-                              <span className="text-slate-700 flex-1">{tip}</span>
+                              <span className="text-sm sm:text-base text-slate-700 flex-1">{tip}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
 
-                      <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
-                        <p className="text-sm text-yellow-800 flex items-start gap-2">
-                          <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="p-3 sm:p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                        <p className="text-xs sm:text-sm text-yellow-800 flex items-start gap-2">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span><strong>Note:</strong> {insights.disclaimer}</span>
@@ -588,18 +588,18 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                       </div>
                     </div>
                   ) : result && !wantsAIInsights ? (
-                    <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 animate-fade-in">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100 animate-fade-in">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">General Health Tips</h2>
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">General Health Tips</h2>
                       </div>
 
-                      <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                        <p className="text-slate-700 leading-relaxed">
+                      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
                           {result.category === "Underweight" && "Focus on nutrient-dense foods and consider consulting a healthcare provider about healthy weight gain strategies."}
                           {result.category === "Normal weight" && "Maintain your healthy weight through balanced nutrition and regular physical activity."}
                           {result.category === "Overweight" && "Small lifestyle changes can make a big difference. Focus on balanced meals and regular physical activity."}
@@ -607,37 +607,37 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                         </p>
                       </div>
 
-                      <div className="mb-6">
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3">
+                      <div className="mb-4 sm:mb-6">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 mb-2 sm:mb-3">
                           General Wellness Tips
                         </h3>
-                        <ul className="space-y-3">
-                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <ul className="space-y-2 sm:space-y-3">
+                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-slate-700 flex-1">Eat a balanced diet rich in fruits, vegetables, whole grains, and lean proteins</span>
+                            <span className="text-sm sm:text-base text-slate-700 flex-1">Eat a balanced diet rich in fruits, vegetables, whole grains, and lean proteins</span>
                           </li>
-                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-slate-700 flex-1">Aim for at least 150 minutes of moderate aerobic activity per week</span>
+                            <span className="text-sm sm:text-base text-slate-700 flex-1">Aim for at least 150 minutes of moderate aerobic activity per week</span>
                           </li>
-                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-slate-700 flex-1">Stay hydrated by drinking 8-10 glasses of water daily</span>
+                            <span className="text-sm sm:text-base text-slate-700 flex-1">Stay hydrated by drinking 8-10 glasses of water daily</span>
                           </li>
-                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-slate-700 flex-1">Get 7-9 hours of quality sleep each night</span>
+                            <span className="text-sm sm:text-base text-slate-700 flex-1">Get 7-9 hours of quality sleep each night</span>
                           </li>
-                          <li className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-                            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span className="text-slate-700 flex-1">Manage stress through meditation, yoga, or other relaxation techniques</span>
@@ -654,9 +654,9 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                         </p>
                       </div>
 
-                      <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
-                        <p className="text-sm text-yellow-800 flex items-start gap-2">
-                          <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                        <p className="text-xs sm:text-sm text-yellow-800 flex items-start gap-2">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span><strong>Note:</strong> These are general wellness tips, not medical advice. Please consult with your healthcare provider for personalized guidance.</span>
@@ -666,15 +666,15 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                   ) : null}
                 </div>
               ) : (
-                <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 flex items-center justify-center min-h-[400px]">
+                <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <svg className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">Ready to Calculate?</h3>
-                    <p className="text-slate-600">Fill in your details to get your BMI and personalized health insights</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">Ready to Calculate?</h3>
+                    <p className="text-sm sm:text-base text-slate-600">Fill in your details to get your BMI and personalized health insights</p>
                   </div>
                 </div>
               )}
@@ -684,20 +684,20 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
       </section>
 
       {/* BMI Information Sections */}
-      <section className="pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-slate-50">
-        <div className="max-w-6xl mx-auto space-y-8">
+      <section className="pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
           
           {/* What is BMI */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 lg:p-10 border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">What is BMI?</h2>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">What is BMI?</h2>
             </div>
-            <div className="space-y-4 text-slate-700 leading-relaxed">
+            <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed">
               <p className="text-base sm:text-lg">
                 Body Mass Index (BMI) is a simple screening tool used to categorize individuals into different weight categories based on their height and weight. It's widely used by healthcare professionals as an initial assessment of whether someone's weight falls within a healthy range.
               </p>
@@ -731,46 +731,46 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
           </div>
 
           {/* BMI Formula */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 lg:p-10 border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">BMI Formula</h2>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">BMI Formula</h2>
             </div>
-            <div className="space-y-6">
-              <p className="text-slate-700 leading-relaxed">
+            <div className="space-y-4 sm:space-y-6">
+              <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
                 BMI is calculated using a simple mathematical formula that relates your weight to your height. The formula varies slightly depending on whether you use metric or imperial units.
               </p>
               
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
-                  <h3 className="font-bold text-slate-900 mb-3">
+              <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="p-4 sm:p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-2 sm:mb-3">
                     Metric Formula
                   </h3>
-                  <div className="bg-white p-4 rounded-xl border border-purple-200 mb-3">
-                    <p className="text-center text-base sm:text-xl font-mono font-bold text-slate-900">
+                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-purple-200 mb-2 sm:mb-3">
+                    <p className="text-center text-sm sm:text-base lg:text-xl font-mono font-bold text-slate-900">
                       BMI = weight (kg) / [height (m)]²
                     </p>
                   </div>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-xs sm:text-sm text-slate-600">
                     <strong>Example:</strong> If you weigh 70 kg and are 1.75 m tall:<br/>
                     BMI = 70 / (1.75 × 1.75) = 70 / 3.06 = <strong>22.9</strong>
                   </p>
                 </div>
 
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
-                  <h3 className="font-bold text-slate-900 mb-3">
+                <div className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-2 sm:mb-3">
                     Imperial Formula
                   </h3>
-                  <div className="bg-white p-4 rounded-xl border border-blue-200 mb-3">
-                    <p className="text-center text-base sm:text-xl font-mono font-bold text-slate-900">
+                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-blue-200 mb-2 sm:mb-3">
+                    <p className="text-center text-sm sm:text-base lg:text-xl font-mono font-bold text-slate-900">
                       BMI = [weight (lbs) / height (in)²] × 703
                     </p>
                   </div>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-xs sm:text-sm text-slate-600">
                     <strong>Example:</strong> If you weigh 154 lbs and are 69 inches tall:<br/>
                     BMI = (154 / (69 × 69)) × 703 = 22.7
                   </p>
@@ -780,56 +780,56 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
           </div>
 
           {/* Limitations of BMI */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 lg:p-10 border border-gray-100">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Limitations of BMI</h2>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">Limitations of BMI</h2>
             </div>
-            <div className="space-y-4 text-slate-700 leading-relaxed">
+            <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed">
               <p>
                 While BMI is a useful screening tool, it's important to understand its limitations. BMI should be considered alongside other factors when assessing health.
               </p>
-              <div className="grid sm:grid-cols-2 gap-4 mt-6">
-                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2">
+              <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
+                <div className="p-4 sm:p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-2">
                     Muscle Mass
                   </h3>
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm">
                     BMI doesn't distinguish between muscle and fat. Athletes with high muscle mass may be classified as overweight despite being very healthy.
                   </p>
                 </div>
-                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2">
+                <div className="p-4 sm:p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-2">
                     Body Composition
                   </h3>
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm">
                     Two people with the same BMI can have very different body compositions, with varying amounts of fat and muscle.
                   </p>
                 </div>
-                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2">
+                <div className="p-4 sm:p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-2">
                     Age & Gender
                   </h3>
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm">
                     BMI doesn't account for age, gender, or ethnic differences in body composition and health risks.
                   </p>
                 </div>
-                <div className="p-5 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-bold text-slate-900 mb-2">
+                <div className="p-4 sm:p-5 bg-orange-50 rounded-xl border border-orange-200">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-2">
                     Fat Distribution
                   </h3>
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm">
                     BMI doesn't indicate where fat is stored. Belly fat carries more health risks than fat stored elsewhere.
                   </p>
                 </div>
               </div>
-              <div className="mt-6 p-5 bg-yellow-50 rounded-xl border border-yellow-200">
-                <p className="text-sm flex items-start gap-2">
-                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mt-4 sm:mt-6 p-4 sm:p-5 bg-yellow-50 rounded-xl border border-yellow-200">
+                <p className="text-xs sm:text-sm flex items-start gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
                   <span><strong>Recommendation:</strong> Use BMI as one of several indicators of health. Consider consulting healthcare professionals for a comprehensive health assessment that includes body composition, waist circumference, blood pressure, cholesterol levels, and overall fitness.</span>
@@ -839,71 +839,71 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
           </div>
 
           {/* Why Track BMI */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl shadow-xl p-8 sm:p-10 border border-green-200">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl shadow-xl p-5 sm:p-8 lg:p-10 border border-green-200">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Why Track Your BMI?</h2>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">Why Track Your BMI?</h2>
             </div>
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Early Health Screening</h3>
-                    <p className="text-sm text-slate-600">Identify potential weight-related health risks early</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Early Health Screening</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Identify potential weight-related health risks early</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Track Progress</h3>
-                    <p className="text-sm text-slate-600">Monitor changes in your weight status over time</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Track Progress</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Monitor changes in your weight status over time</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Set Goals</h3>
-                    <p className="text-sm text-slate-600">Establish realistic health and fitness objectives</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Set Goals</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Establish realistic health and fitness objectives</p>
                   </div>
                 </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Healthcare Communication</h3>
-                    <p className="text-sm text-slate-600">Facilitate discussions with your healthcare provider</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Healthcare Communication</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Facilitate discussions with your healthcare provider</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Lifestyle Awareness</h3>
-                    <p className="text-sm text-slate-600">Gain insight into how lifestyle choices affect your health</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Lifestyle Awareness</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Gain insight into how lifestyle choices affect your health</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Quick & Easy</h3>
-                    <p className="text-sm text-slate-600">Simple calculation you can do anytime, anywhere</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Quick & Easy</h3>
+                    <p className="text-xs sm:text-sm text-slate-600">Simple calculation you can do anytime, anywhere</p>
                   </div>
                 </div>
               </div>
