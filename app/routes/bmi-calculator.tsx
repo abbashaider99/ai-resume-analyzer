@@ -436,7 +436,7 @@ Keep tips short (1 sentence each), practical, and easy to follow. Mix diet, exer
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-base font-bold text-slate-900">Get AI-Powered Health Insights</span>
+                        <span className="text-sm font-semibold text-slate-900">Get AI-Powered Health Insights</span>
                           <span className="px-2 py-0.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-white text-xs font-bold rounded-full">Free</span>
                       </div>
                       {wantsAIInsights && !isSignedIn && (
