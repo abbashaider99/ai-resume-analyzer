@@ -5,6 +5,7 @@ export default [
     route('/about', 'routes/about.tsx'),
     route('/contact', 'routes/contact.tsx'),
     route('/bmi-calculator', 'routes/bmi-calculator.tsx'),
+    route('/website-checker', 'routes/website-checker.tsx'),
     route('/wipe', 'routes/wipe.tsx'),
     
     ...prefix('/hirelens', [
