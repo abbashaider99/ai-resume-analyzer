@@ -1786,73 +1786,73 @@ Format as JSON:
 
                     {/* AI Trust Analysis Section */}
                     {result.aiTrustAnalysis && (
-                      <div className="mb-8">
-                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 sm:p-6 border-2 border-blue-200 shadow-xl">
-                          <div className="flex items-center gap-3 mb-5">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-6 sm:mb-8">
+                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-3 sm:p-5 border-2 border-blue-200 shadow-xl">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <h3 className="text-lg sm:text-xl font-bold text-slate-900">AI Trust Analysis</h3>
-                              <p className="text-xs sm:text-sm text-slate-600">Advanced AI-powered domain trustworthiness assessment</p>
+                              <h3 className="text-base sm:text-lg font-bold text-slate-900">AI Trust Analysis</h3>
+                              <p className="text-[10px] sm:text-xs text-slate-600">Advanced AI-powered domain trustworthiness assessment</p>
                             </div>
                           </div>
 
                           {/* Trust Likelihood & Risk Level */}
-                          <div className="grid grid-cols-2 gap-4 mb-5">
-                            <div className="bg-white rounded-xl p-4 shadow-md border border-blue-100">
-                              <div className="text-xs sm:text-sm text-slate-600 mb-2 font-medium">AI Trust Likelihood</div>
-                              <div className="flex items-end gap-2">
-                                <span className="text-3xl sm:text-4xl font-bold text-cyan-700">{result.aiTrustAnalysis.trustLikelihood}</span>
-                                <span className="text-lg text-slate-500 mb-1">/100</span>
+                          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                            <div className="bg-white rounded-xl p-2.5 sm:p-3 shadow-md border border-blue-100">
+                              <div className="text-[10px] sm:text-xs text-slate-600 mb-1.5 sm:mb-2 font-medium">AI Trust Likelihood</div>
+                              <div className="flex items-end gap-1.5 sm:gap-2">
+                                <span className="text-2xl sm:text-3xl font-bold text-cyan-700">{result.aiTrustAnalysis.trustLikelihood}</span>
+                                <span className="text-sm sm:text-base text-slate-500 mb-0.5 sm:mb-1">/100</span>
                               </div>
-                              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                              <div className="mt-1.5 sm:mt-2 w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                                 <div 
-                                  className="bg-gradient-to-r from-blue-500 to-cyan-600 h-2 rounded-full transition-all"
+                                  className="bg-gradient-to-r from-blue-500 to-cyan-600 h-1.5 sm:h-2 rounded-full transition-all"
                                   style={{ width: `${result.aiTrustAnalysis.trustLikelihood}%` }}
                                 ></div>
                               </div>
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 shadow-md border border-blue-100">
-                              <div className="text-xs sm:text-sm text-slate-600 mb-2 font-medium">Risk Level</div>
-                              <div className={`text-2xl sm:text-3xl font-bold ${result.aiTrustAnalysis.riskColor}`}>
+                            <div className="bg-white rounded-xl p-2.5 sm:p-3 shadow-md border border-blue-100">
+                              <div className="text-[10px] sm:text-xs text-slate-600 mb-1.5 sm:mb-2 font-medium">Risk Level</div>
+                              <div className={`text-xl sm:text-2xl font-bold ${result.aiTrustAnalysis.riskColor}`}>
                                 {result.aiTrustAnalysis.riskLevel}
                               </div>
-                              <div className="flex items-center gap-1 mt-2">
+                              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                                 {['Critical', 'High', 'Medium'].includes(result.aiTrustAnalysis.riskLevel) && (
-                                  <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                   </svg>
                                 )}
                                 {result.aiTrustAnalysis.riskLevel === 'Low' && (
-                                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
                                 )}
-                                <span className="text-xs text-slate-500">AI Assessment</span>
+                                <span className="text-[10px] sm:text-xs text-slate-500">AI Assessment</span>
                               </div>
                             </div>
                           </div>
 
                           {/* AI Insights */}
                           {result.aiTrustAnalysis.aiInsights && result.aiTrustAnalysis.aiInsights.length > 0 && (
-                            <div className="mb-5">
-                              <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="mb-3 sm:mb-4">
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                                 AI-Powered Insights
                               </h4>
-                              <div className="space-y-2">
+                              <div className="space-y-1.5 sm:space-y-2">
                                 {result.aiTrustAnalysis.aiInsights.map((insight, index) => (
-                                  <div key={index} className="flex items-start gap-2 p-3 bg-white rounded-lg border border-blue-100">
-                                    <svg className="w-4 h-4 text-cyan-700 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <div key={index} className="flex items-start gap-1.5 sm:gap-2 p-2 sm:p-2.5 bg-white rounded-lg border border-blue-100">
+                                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-700 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-xs sm:text-sm text-slate-700">{insight}</span>
+                                    <span className="text-[10px] sm:text-xs text-slate-700">{insight}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1861,18 +1861,18 @@ Format as JSON:
 
                           {/* Domain Characteristics */}
                           {result.aiTrustAnalysis.domainCharacteristics && result.aiTrustAnalysis.domainCharacteristics.length > 0 && (
-                            <div className="mb-5">
-                              <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="mb-3 sm:mb-4">
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-900 mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                 </svg>
                                 Domain Characteristics
                               </h4>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                 {result.aiTrustAnalysis.domainCharacteristics.map((char, index) => (
-                                  <div key={index} className="bg-white rounded-lg p-3 border border-blue-100">
-                                    <div className="text-xs text-slate-600 mb-1">{char.label}</div>
-                                    <div className={`text-sm font-semibold px-2 py-1 rounded inline-block ${char.statusColor}`}>
+                                  <div key={index} className="bg-white rounded-lg p-2 sm:p-2.5 border border-blue-100">
+                                    <div className="text-[10px] sm:text-xs text-slate-600 mb-1">{char.label}</div>
+                                    <div className={`text-xs sm:text-sm font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded inline-block ${char.statusColor}`}>
                                       {char.status}
                                     </div>
                                   </div>
@@ -1882,14 +1882,14 @@ Format as JSON:
                           )}
 
                           {/* AI Recommendation */}
-                          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white">
-                            <div className="flex items-start gap-3">
-                              <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-2.5 sm:p-3 text-white">
+                            <div className="flex items-start gap-2 sm:gap-3">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               <div>
-                                <h4 className="font-bold text-sm sm:text-base mb-1">AI Recommendation</h4>
-                                <p className="text-xs sm:text-sm text-cyan-50">{result.aiTrustAnalysis.recommendation}</p>
+                                <h4 className="font-bold text-xs sm:text-sm mb-0.5 sm:mb-1">AI Recommendation</h4>
+                                <p className="text-[10px] sm:text-xs text-cyan-50">{result.aiTrustAnalysis.recommendation}</p>
                               </div>
                             </div>
                           </div>
@@ -1923,10 +1923,7 @@ Format as JSON:
                       <div className="space-y-6 sm:space-y-8">
                         {/* Domain Information Section */}
                         <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 100-18 9 9 0 000 18z" />
-                            </svg>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3">
                             Domain Information
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -1991,10 +1988,7 @@ Format as JSON:
 
                         {/* Registration Information Section */}
                         <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3">
                             Registration Information
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -2090,10 +2084,7 @@ Format as JSON:
 
                         {/* Contact Information Section */}
                         <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3">
                             Contact Information
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
