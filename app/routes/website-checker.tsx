@@ -53,6 +53,18 @@ interface WebsiteAnalysis {
     }[];
     recommendation: string;
   };
+  externalReports?: {
+    source: string;
+    name: string;
+    url: string;
+    rating?: string;
+    description?: string;
+    icon?: string;
+  }[];
+  trustHighlights?: {
+    positive: string[];
+    negative: string[];
+  };
 }
 
 interface ValidationErrors {
@@ -698,6 +710,40 @@ Format your response as JSON:
     };
   };
 
+  const fetchExternalReports = async (domain: string) => {
+    // Fetch reports from various internet sources
+    const reports = [];
+    
+    // ScamAdviser
+    reports.push({
+      source: 'ScamAdviser',
+      name: 'ScamAdviser Trust Report',
+      url: `https://www.scamadviser.com/check-website/${domain}`,
+      description: 'Comprehensive trust score and safety analysis',
+      icon: '🛡️'
+    });
+    
+    // Trustpilot
+    reports.push({
+      source: 'Trustpilot',
+      name: 'Trustpilot Reviews',
+      url: `https://www.trustpilot.com/review/${domain}`,
+      description: 'Customer reviews and ratings',
+      icon: '⭐'
+    });
+    
+    // URLVoid
+    reports.push({
+      source: 'URLVoid',
+      name: 'URLVoid Security Scan',
+      url: `https://www.urlvoid.com/scan/${domain}`,
+      description: 'Multiple blacklist and security checks',
+      icon: '🔍'
+    });
+    
+    return reports;
+  };
+
   const generateAITrustAnalysis = async (
     domain: string,
     trustScore: number,
@@ -719,24 +765,19 @@ ${phishingInfo?.isPhishing ? `- ⚠️ PHISHING DETECTED (${phishingInfo.confide
 - ${phishingInfo.likelyTarget ? `Likely impersonating: ${phishingInfo.likelyTarget}` : ''}` : ''}
 
 Please provide:
-1. AI Trust Likelihood (0-100 scale)
-2. Risk Level (Low/Medium/High/Critical)
-3. 4-5 specific AI-powered insights about this domain
-4. Domain characteristics analysis (length, structure, TLD, special characters, etc.)
-5. Final recommendation
+1. 4-5 specific AI-powered insights about this domain's security and trustworthiness
+2. Domain characteristics analysis (length, structure, TLD, special characters, etc.)
+3. Analysis notes (do NOT provide a recommendation - that will be generated separately)
 
 Format as JSON:
 {
-  "trustLikelihood": <number 0-100>,
-  "riskLevel": "<Low/Medium/High/Critical>",
-  "aiInsights": ["insight1", "insight2", ...],
+  "aiInsights": ["insight1", "insight2", "insight3", "insight4"],
   "domainCharacteristics": [
     {"label": "Domain Length", "status": "Normal/Suspicious/Safe", "analysis": "brief explanation"},
     {"label": "TLD Analysis", "status": "Trusted/Common/Suspicious", "analysis": "brief explanation"},
     {"label": "Character Pattern", "status": "Clean/Contains Hyphens/Suspicious", "analysis": "brief explanation"},
     {"label": "Brand Similarity", "status": "No Match/Similar/Exact Match", "analysis": "brief explanation"}
-  ],
-  "recommendation": "clear recommendation"
+  ]
 }`;
 
         const response = await window.puter.ai.chat(prompt);
@@ -753,10 +794,65 @@ Format as JSON:
             'Critical': 'text-red-600'
           };
           
+          // ALWAYS use the calculated trust score, not AI's suggestion
+          const finalTrustLikelihood = trustScore;
+          
+          // Calculate risk level based on trust score (inverse relationship)
+          let calculatedRiskLevel = 'Medium';
+          if (finalTrustLikelihood >= 80) {
+            calculatedRiskLevel = 'Low';
+          } else if (finalTrustLikelihood >= 60) {
+            calculatedRiskLevel = 'Medium';
+          } else if (finalTrustLikelihood >= 40) {
+            calculatedRiskLevel = 'High';
+          } else {
+            calculatedRiskLevel = 'Critical';
+          }
+          
+          // Generate appropriate recommendation based on trust score
+          let recommendation = '';
+          if (phishingInfo?.isPhishing && (phishingInfo.confidence ?? 0) >= 60) {
+            recommendation = [
+              'Critical risk: Do NOT proceed.',
+              'Close the site immediately and avoid clicking any links.',
+              'Do not enter passwords or payment details.',
+              'If you interacted already, change affected passwords and contact your bank.'
+            ].join(' \n• ');
+            recommendation = '• ' + recommendation;
+          } else if (finalTrustLikelihood >= 80) {
+            recommendation = [
+              'Looks trustworthy: you can proceed.',
+              'Still verify the URL spelling and padlock (HTTPS).',
+              'Use strong, unique passwords and enable 2FA when possible.'
+            ].join(' \n• ');
+            recommendation = '• ' + recommendation;
+          } else if (finalTrustLikelihood >= 60) {
+            recommendation = [
+              'Likely safe: proceed with caution.',
+              'Avoid sharing sensitive data unless necessary.',
+              'Prefer guest checkout or a trusted payment provider.'
+            ].join(' \n• ');
+            recommendation = '• ' + recommendation;
+          } else if (finalTrustLikelihood >= 40) {
+            recommendation = [
+              'Use high caution: limited trust signals.',
+              'Do not enter personal or payment information.',
+              'Search for independent reviews before using this site.'
+            ].join(' \n• ');
+            recommendation = '• ' + recommendation;
+          } else {
+            recommendation = [
+              'High risk: avoid this site.',
+              'Do not download files or submit any forms.',
+              'Consider reporting this website if it looks fraudulent.'
+            ].join(' \n• ');
+            recommendation = '• ' + recommendation;
+          }
+          
           return {
-            trustLikelihood: parsed.trustLikelihood || trustScore,
-            riskLevel: parsed.riskLevel || 'Medium',
-            riskColor: riskColorMap[parsed.riskLevel] || 'text-yellow-600',
+            trustLikelihood: finalTrustLikelihood,
+            riskLevel: calculatedRiskLevel,
+            riskColor: riskColorMap[calculatedRiskLevel],
             aiInsights: parsed.aiInsights || [],
             domainCharacteristics: (parsed.domainCharacteristics || []).map((char: any) => ({
               label: char.label,
@@ -767,7 +863,7 @@ Format as JSON:
                 ? 'text-red-600 bg-red-50'
                 : 'text-yellow-600 bg-yellow-50'
             })),
-            recommendation: parsed.recommendation || 'Exercise caution when visiting this website.'
+            recommendation: recommendation || parsed.recommendation || 'Exercise caution when visiting this website.'
           };
         } catch (parseError) {
           console.error("Error parsing AI response:", parseError);
@@ -887,6 +983,86 @@ Format as JSON:
       aiInsights,
       domainCharacteristics,
       recommendation
+    };
+  };
+
+  const generateTrustHighlights = (
+    trustScore: number,
+    hasSSL: boolean,
+    domainAge: number | null,
+    scamKeywords: string[],
+    phishingInfo?: { isPhishing: boolean; confidence: number; patterns: string[]; likelyTarget?: string }
+  ) => {
+    const positiveHighlights: string[] = [];
+    const negativeHighlights: string[] = [];
+
+    // Positive highlights
+    if (hasSSL) {
+      positiveHighlights.push("We found a valid SSL certificate");
+    }
+
+    if (domainAge !== null) {
+      if (domainAge >= 5) {
+        positiveHighlights.push(`This website has been active for ${domainAge} years, indicating established presence`);
+      } else if (domainAge >= 2) {
+        positiveHighlights.push(`Domain has been registered for ${domainAge} years`);
+      }
+    }
+
+    if (scamKeywords.length === 0) {
+      positiveHighlights.push("No obvious scam-related keywords were detected in the domain name");
+    }
+
+    if (!phishingInfo?.isPhishing) {
+      positiveHighlights.push("Our phishing detection system did not identify this as a phishing attempt");
+    }
+
+    if (trustScore >= 80) {
+      positiveHighlights.push("The website shows multiple positive trust signals");
+    }
+
+    // Negative highlights
+    if (!hasSSL) {
+      negativeHighlights.push("The website does not have a valid SSL certificate, which is concerning for security");
+    }
+
+    if (domainAge !== null) {
+      if (domainAge < 0.5) {
+        negativeHighlights.push("The age of this site is very young (less than 6 months old)");
+      } else if (domainAge < 1) {
+        negativeHighlights.push("This is a relatively new domain (less than 1 year old), which requires extra caution");
+      }
+    }
+
+    if (scamKeywords.length > 0) {
+      negativeHighlights.push(`The domain contains ${scamKeywords.length} suspicious keyword${scamKeywords.length > 1 ? 's' : ''} commonly associated with scams`);
+    }
+
+    if (phishingInfo?.isPhishing) {
+      negativeHighlights.push(`Our AI detected this as a potential phishing site with ${phishingInfo.confidence}% confidence`);
+      if (phishingInfo.likelyTarget) {
+        negativeHighlights.push(`This site may be impersonating ${phishingInfo.likelyTarget}`);
+      }
+    }
+
+    if (trustScore < 40) {
+      negativeHighlights.push("The overall trust score is critically low, indicating high risk");
+    } else if (trustScore < 60) {
+      negativeHighlights.push("The trust score suggests limited positive signals about this website");
+    }
+
+    // Ensure we have at least some highlights
+    if (positiveHighlights.length === 0) {
+      positiveHighlights.push("Limited positive information available about this website");
+    }
+
+    if (negativeHighlights.length === 0 && trustScore >= 70) {
+      negativeHighlights.push("No major red flags detected during our analysis");
+    }
+
+    return {
+      positive: positiveHighlights,
+      negative: negativeHighlights
     };
   };
 
@@ -1210,6 +1386,9 @@ Format as JSON:
       // Fetch user reports
       const userReports = await fetchUserReports(domain, trustScore);
 
+      // Fetch external reports
+      const externalReports = await fetchExternalReports(domain);
+
       // Generate AI Trust Analysis
       const aiTrustAnalysis = await generateAITrustAnalysis(
         domain,
@@ -1217,6 +1396,15 @@ Format as JSON:
         phishingDetection.isPhishing ? phishingDetection : undefined,
         sslCheck.message,
         domainAgeText
+      );
+
+      // Generate Trust Highlights
+      const trustHighlights = generateTrustHighlights(
+        trustScore,
+        sslCheck.hasSSL,
+        actualDomainAge,
+        scamKeywords,
+        phishingDetection.isPhishing ? phishingDetection : undefined
       );
 
       const analysis: WebsiteAnalysis = {
@@ -1239,7 +1427,9 @@ Format as JSON:
         nameservers: domainDetails.nameservers || [],
         phishingDetection: phishingDetection.isPhishing ? phishingDetection : undefined,
         userReports,
-        aiTrustAnalysis
+        aiTrustAnalysis,
+        externalReports,
+        trustHighlights
       };
 
       setResult(analysis);
@@ -1295,6 +1485,9 @@ Format as JSON:
       positiveReports: "Positive Reports",
       negativeReports: "Negative Reports",
       trustRating: "User Trust Rating",
+      externalReports: "External Reports & Analysis",
+      externalReportsDesc: "Check this website on trusted security platforms",
+      viewReport: "View Report",
       commonComplaints: "Common User Complaints",
       noComplaints: "No major complaints reported",
       notAvailable: "Not Available",
@@ -1335,6 +1528,9 @@ Format as JSON:
       positiveReports: "सकारात्मक रिपोर्ट",
       negativeReports: "नकारात्मक रिपोर्ट",
       trustRating: "उपयोगकर्ता विश्वास रेटिंग",
+      externalReports: "बाहरी रिपोर्ट और विश्लेषण",
+      externalReportsDesc: "विश्वसनीय सुरक्षा प्लेटफार्मों पर इस वेबसाइट की जाँच करें",
+      viewReport: "रिपोर्ट देखें",
       commonComplaints: "सामान्य उपयोगकर्ता शिकायतें",
       noComplaints: "कोई बड़ी शिकायत नहीं",
       notAvailable: "उपलब्ध नहीं है",
@@ -1882,14 +2078,68 @@ Format as JSON:
                           )}
 
                           {/* AI Recommendation */}
-                          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-2.5 sm:p-3 text-white">
+                          <div className={`rounded-xl p-3 sm:p-4 shadow-lg border-2 ${
+                            result.aiTrustAnalysis.riskLevel === 'Low' 
+                              ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
+                              : result.aiTrustAnalysis.riskLevel === 'Medium'
+                              ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300'
+                              : result.aiTrustAnalysis.riskLevel === 'High'
+                              ? 'bg-gradient-to-br from-orange-50 to-red-50 border-orange-300'
+                              : 'bg-gradient-to-br from-red-50 to-rose-50 border-red-400'
+                          }`}>
                             <div className="flex items-start gap-2 sm:gap-3">
-                              <svg className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <div>
-                                <h4 className="font-bold text-xs sm:text-sm mb-0.5 sm:mb-1">AI Recommendation</h4>
-                                <p className="text-[10px] sm:text-xs text-cyan-50">{result.aiTrustAnalysis.recommendation}</p>
+                              {/* Dynamic Icon based on Risk Level */}
+                              {result.aiTrustAnalysis.riskLevel === 'Low' ? (
+                                <svg className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0 mt-0.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              ) : result.aiTrustAnalysis.riskLevel === 'Medium' ? (
+                                <svg className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0 mt-0.5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                              ) : result.aiTrustAnalysis.riskLevel === 'High' ? (
+                                <svg className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0 mt-0.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              ) : (
+                                <svg className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0 mt-0.5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1 sm:mb-1.5">
+                                  <h4 className={`font-bold text-sm sm:text-base ${
+                                    result.aiTrustAnalysis.riskLevel === 'Low' 
+                                      ? 'text-green-800'
+                                      : result.aiTrustAnalysis.riskLevel === 'Medium'
+                                      ? 'text-yellow-800'
+                                      : result.aiTrustAnalysis.riskLevel === 'High'
+                                      ? 'text-orange-800'
+                                      : 'text-red-800'
+                                  }`}>AI Security Recommendation</h4>
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold ${
+                                    result.aiTrustAnalysis.riskLevel === 'Low' 
+                                      ? 'bg-green-200 text-green-800'
+                                      : result.aiTrustAnalysis.riskLevel === 'Medium'
+                                      ? 'bg-yellow-200 text-yellow-800'
+                                      : result.aiTrustAnalysis.riskLevel === 'High'
+                                      ? 'bg-orange-200 text-orange-800'
+                                      : 'bg-red-200 text-red-800'
+                                  }`}>
+                                    {result.aiTrustAnalysis.riskLevel} Risk
+                                  </span>
+                                </div>
+                                <div className={`text-[10px] sm:text-xs leading-relaxed whitespace-pre-line ${
+                                  result.aiTrustAnalysis.riskLevel === 'Low' 
+                                    ? 'text-green-900'
+                                    : result.aiTrustAnalysis.riskLevel === 'Medium'
+                                    ? 'text-yellow-900'
+                                    : result.aiTrustAnalysis.riskLevel === 'High'
+                                    ? 'text-orange-900'
+                                    : 'text-red-900'
+                                }`}>
+                                  {result.aiTrustAnalysis.recommendation}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1897,8 +2147,10 @@ Format as JSON:
                       </div>
                     )}
 
+                    
+
                     {/* Technical Details - Professional & Sleek - 3 Per Row */}
-                    <div className="mb-6 sm:mb-8">
+                    <div className="mb-6 sm:mb-8" id="technical-details">
                       {/* Section Header with Gradient Line */}
                       <div className="relative mb-4 sm:mb-6">
                         <div className="flex items-center gap-3 sm:gap-4">
@@ -2221,22 +2473,22 @@ Format as JSON:
                         <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.keyFindings}</h3>
                       </div>
 
-                      <ul className="space-y-2 sm:space-y-3">
+                      <ul className="space-y-2 sm:space-y-2.5 list-none">
                         {(() => {
                           console.log("Rendering reasons:", result.reasons, "Length:", result.reasons?.length);
                           return null;
                         })()}
                         {result.reasons && result.reasons.length > 0 ? (
                           result.reasons.map((reason, index) => (
-                            <li key={index} className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <li key={index} className="flex items-start gap-2 sm:gap-3">
+                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                               </svg>
                               <span className="text-sm sm:text-base text-slate-700 flex-1">{reason}</span>
                             </li>
                           ))
                         ) : (
-                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
+                          <li className="flex items-start gap-2 sm:gap-3">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -2255,38 +2507,28 @@ Format as JSON:
                         <span className="bg-white px-4 text-sm font-semibold text-slate-500">Safety Guidelines</span>
                       </div>
                     </div>
+                    
 
                     {/* Safety Recommendations Section */}
                     <div>
                       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                        </div>
                         <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.safetyRecommendations}</h3>
                       </div>
 
-                      <ul className="space-y-2 sm:space-y-3 mb-6">
+                      <ul className="space-y-2 sm:space-y-2.5 mb-6 ml-4">
                         {(() => {
                           console.log("Rendering safety tips:", result.safetyTips, "Length:", result.safetyTips?.length);
                           return null;
                         })()}
                         {result.safetyTips && result.safetyTips.length > 0 ? (
                           result.safetyTips.map((tip, index) => (
-                            <li key={index} className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-yellow-50 rounded-lg">
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                              </svg>
-                              <span className="text-sm sm:text-base text-slate-700 flex-1">{tip}</span>
+                            <li key={index} className="text-sm sm:text-base text-slate-700">
+                              {tip}
                             </li>
                           ))
                         ) : (
-                          <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-yellow-50 rounded-lg">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                              </svg>
-                            <span className="text-sm sm:text-base text-slate-500 flex-1 italic">Generating safety recommendations...</span>
+                          <li className="text-sm sm:text-base text-slate-500 italic">
+                            Generating safety recommendations...
                           </li>
                         )}
                       </ul>
@@ -2301,103 +2543,99 @@ Format as JSON:
                       </div>
                     </div>
 
-                    {/* Professional Divider */}
-                    <div className="relative my-8">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t-2 border-slate-200"></div>
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-white px-4 text-sm font-semibold text-slate-500">{t.userReports}</span>
-                      </div>
-                    </div>
-
-                    {/* User Reports Section */}
-                    {result.userReports ? (
-                      <div>
-                        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
+                    {/* External Reports Section */}
+                    {result.externalReports && result.externalReports.length > 0 && (
+                      <>
+                        {/* Professional Divider */}
+                        <div className="relative my-8">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t-2 border-slate-200"></div>
                           </div>
-                          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.userReports}</h3>
-                        </div>
-
-                        {/* Reports Statistics */}
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                          <div className="p-3 sm:p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700 mb-1">
-                              {result.userReports.positiveReports}
-                            </div>
-                            <div className="text-xs sm:text-sm text-green-600 font-medium">{t.positiveReports}</div>
-                          </div>
-                          <div className="p-3 sm:p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-100">
-                            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-700 mb-1">
-                              {result.userReports.negativeReports}
-                            </div>
-                            <div className="text-xs sm:text-sm text-red-600 font-medium">{t.negativeReports}</div>
+                          <div className="relative flex justify-center">
+                            <span className="bg-white px-4 text-sm font-semibold text-slate-500">{t.externalReports}</span>
                           </div>
                         </div>
 
-                        {/* Trust Rating */}
-                        <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 mb-4 sm:mb-6">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs sm:text-sm font-semibold text-slate-700">{t.trustRating}</span>
-                            <span className="text-base sm:text-lg font-bold text-blue-700">
-                              {result.userReports.trustRating?.toFixed(1)}/5.0
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <svg
-                                key={star}
-                                className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                                  star <= Math.round(result.userReports!.trustRating || 0)
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                                fill={star <= Math.round(result.userReports!.trustRating || 0) ? 'currentColor' : 'none'}
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            ))}
-                            <span className="ml-2 text-xs sm:text-sm text-slate-600">
-                              ({result.userReports.totalReports} {t.totalReports})
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Common Complaints */}
                         <div>
-                          <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-3">{t.commonComplaints}</h4>
-                          {result.userReports.commonComplaints.length > 0 ? (
-                            <ul className="space-y-2">
-                              {result.userReports.commonComplaints.map((complaint, index) => (
-                                <li key={index} className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg">
-                                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                  </svg>
-                                  <span className="text-xs sm:text-sm text-slate-700 flex-1">{complaint}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg">{t.noComplaints}</p>
-                          )}
+                          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.externalReports}</h3>
+                              <p className="text-xs sm:text-sm text-slate-600">{t.externalReportsDesc}</p>
+                            </div>
+                          </div>
+
+                          {/* External Reports Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                            {result.externalReports.map((report, index) => (
+                              <a
+                                key={index}
+                                href={report.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative bg-white rounded-xl shadow-md border border-slate-200 p-4 hover:shadow-xl hover:border-blue-300 transition-all duration-300 overflow-hidden"
+                              >
+                                {/* Hover Effect Background */}
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                
+                                <div className="flex items-start gap-3">
+                                  {/* Icon */}
+                                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
+                                    {report.icon}
+                                  </div>
+                                  
+                                  <div className="flex-1 min-w-0">
+                                    {/* Source Badge */}
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                        {report.source}
+                                      </span>
+                                      <svg className="w-3 h-3 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                      </svg>
+                                    </div>
+                                    
+                                    {/* Report Name */}
+                                    <h4 className="font-bold text-sm text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                      {report.name}
+                                    </h4>
+                                    
+                                    {/* Description */}
+                                    <p className="text-xs text-slate-600 line-clamp-2 mb-2">
+                                      {report.description}
+                                    </p>
+                                    
+                                    {/* View Report Button */}
+                                    <div className="flex items-center gap-1 text-xs font-medium text-blue-600 group-hover:gap-2 transition-all">
+                                      <span>{t.viewReport}</span>
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+
+                          {/* Info Box */}
+                          <div className="mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                            <div className="flex items-start gap-2 sm:gap-3">
+                              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                              <div className="text-xs sm:text-sm text-blue-800">
+                                <p className="font-semibold mb-1">Cross-Reference Recommended</p>
+                                <p>Check multiple sources for a comprehensive security assessment. Click on any report to view detailed analysis from that platform.</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 px-4">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <p className="text-slate-600 text-sm sm:text-base mb-2 font-medium">{t.noDataAvailable}</p>
-                        <p className="text-slate-500 text-xs sm:text-sm">User reviews and reports are currently unavailable for this domain.</p>
-                      </div>
+                      </>
                     )}
                   </div>
                 </>
