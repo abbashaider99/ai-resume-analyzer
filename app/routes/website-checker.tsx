@@ -327,83 +327,233 @@ export default function WebsiteChecker() {
     hasSSL: boolean,
     scamKeywords: string[],
     domainLength: number,
-    phishingConfidence?: number
+    phishingConfidence?: number,
+    domainName?: string,
+    registrar?: string | null
   ): number => {
-    let score = 40; // Base score (reduced from 50 to be more conservative)
+    let score = 35; // Lower base score - more conservative approach like ScamAdviser
 
-    // Domain age scoring (max 35 points) - More granular and weighted
-    if (domainAge !== null) {
+    console.log('=== Trust Score Calculation Debug ===');
+    console.log('Input Parameters:');
+    console.log('- Domain Age:', domainAge, 'years');
+    console.log('- Has SSL:', hasSSL);
+    console.log('- Scam Keywords:', scamKeywords);
+    console.log('- Domain Length:', domainLength);
+    console.log('- Phishing Confidence:', phishingConfidence);
+    console.log('- Domain Name:', domainName);
+    console.log('- Registrar:', registrar);
+    console.log('Starting Score:', score);
+
+    // Domain age scoring (max 35 points) - STRICTER penalties for new domains
+    if (domainAge !== null && domainAge >= 0) {
+      let ageScore = 0;
       if (domainAge >= 10) {
-        score += 35; // Very established domain
+        ageScore = 35; // Very established domain
       } else if (domainAge >= 5) {
-        score += 30; // Well-established domain
+        ageScore = 28; // Well-established domain
       } else if (domainAge >= 3) {
-        score += 25; // Moderately established
+        ageScore = 20; // Moderately established
       } else if (domainAge >= 2) {
-        score += 20; // Somewhat established
+        ageScore = 12; // Somewhat established
       } else if (domainAge >= 1) {
-        score += 10; // New but not brand new
+        ageScore = 5; // New but not brand new
       } else if (domainAge >= 0.5) {
-        score += 5; // 6+ months old
+        ageScore = -5; // 6+ months old - still suspicious
+      } else if (domainAge >= 0.25) {
+        ageScore = -15; // 3-6 months - very suspicious
       } else {
-        score -= 15; // Very new domains are highly suspicious
+        ageScore = -25; // Less than 3 months - highly suspicious (like flipshop24)
       }
+      score += ageScore;
+      console.log(`Domain Age Score: ${ageScore >= 0 ? '+' : ''}${ageScore} (Age: ${domainAge.toFixed(2)} years, Total: ${score})`);
     } else {
-      // If we can't determine age, be slightly cautious
-      score -= 5;
+      // If we can't determine age, assume it's new and penalize
+      score -= 10;
+      console.log('Domain Age Score: -10 (Unable to determine, assuming new, Total:', score + ')');
     }
 
-    // SSL scoring (max 25 points) - Critical for trust
+    // SSL scoring (max 15 points) - Less weight, it's basic nowadays
     if (hasSSL) {
-      score += 25; // Increased from 20
+      score += 15;
+      console.log(`SSL Score: +15 (Total: ${score})`);
     } else {
-      score -= 20; // Increased penalty from 15
+      score -= 25;
+      console.log(`SSL Score: -25 (No SSL - Major red flag, Total: ${score})`);
     }
 
-    // Phishing detection penalty (up to -60 points) - More severe
+    // Phishing detection penalty (up to -50 points) - Severe penalty
     if (phishingConfidence && phishingConfidence > 0) {
+      let phishingPenalty = 0;
       if (phishingConfidence >= 80) {
-        score -= 60; // Critical phishing threat
+        phishingPenalty = -50; // Critical phishing threat
       } else if (phishingConfidence >= 60) {
-        score -= 45; // High phishing threat
+        phishingPenalty = -40; // High phishing threat
       } else if (phishingConfidence >= 40) {
-        score -= 30; // Medium phishing threat
+        phishingPenalty = -25; // Medium phishing threat
       } else if (phishingConfidence >= 20) {
-        score -= 15; // Low phishing threat
+        phishingPenalty = -10; // Low phishing threat
       } else {
-        score -= 5; // Minimal phishing indicators
+        phishingPenalty = -5; // Minimal phishing indicators
+      }
+      score += phishingPenalty;
+      console.log(`Phishing Penalty: ${phishingPenalty} (Confidence: ${phishingConfidence}%, Total: ${score})`);
+    }
+
+    // Scam keywords penalty (up to -35 points)
+    if (scamKeywords.length > 0) {
+      const keywordPenalty = -Math.min(35, scamKeywords.length * 12);
+      score += keywordPenalty;
+      console.log(`Scam Keywords Penalty: ${keywordPenalty} (Found: ${scamKeywords.join(', ')}, Total: ${score})`);
+    }
+
+    // Domain length scoring - STRICTER penalties
+    let lengthScore = 0;
+    if (domainLength < 6) {
+      lengthScore = 8; // Very short, premium domain
+    } else if (domainLength < 12) {
+      lengthScore = 5; // Good length
+    } else if (domainLength < 18) {
+      lengthScore = 0; // Acceptable length
+    } else if (domainLength < 25) {
+      lengthScore = -5; // Getting long
+    } else if (domainLength < 35) {
+      lengthScore = -12; // Very long, suspicious
+    } else {
+      lengthScore = -25; // Extremely long, highly suspicious
+    }
+    score += lengthScore;
+    console.log(`Domain Length Score: ${lengthScore >= 0 ? '+' : ''}${lengthScore} (Length: ${domainLength}, Total: ${score})`);
+
+    // Domain naming pattern analysis - MUCH STRICTER
+    if (domainName) {
+      const lowerDomain = domainName.toLowerCase();
+      let namingScore = 0;
+      
+      // Check for suspicious patterns - MORE PENALTIES
+      const suspiciousPatterns = [
+        { pattern: /\d{3,}/, penalty: -15, reason: 'Contains number sequences (e.g., 24)' }, // Catches "24" in flipshop24
+        { pattern: /\d{2}/, penalty: -8, reason: 'Contains 2-digit numbers' }, // Additional penalty for 2 digits
+        { pattern: /\d/, penalty: -5, reason: 'Contains numbers in domain' }, // ANY number is suspicious
+        { pattern: /-{2,}/, penalty: -12, reason: 'Multiple consecutive hyphens' },
+        { pattern: /--/, penalty: -8, reason: 'Double hyphens' },
+        { pattern: /^[0-9]/, penalty: -10, reason: 'Starts with number' },
+        { pattern: /(free|win|prize|claim|bonus|gift|lucky|deal|offer|discount|cheap|sale)/i, penalty: -15, reason: 'Promotional keywords' },
+        { pattern: /(shop|store|market|buy|sell)/i, penalty: -8, reason: 'Generic shop keywords' }, // flipshop = suspicious
+        { pattern: /(login|signin|account|secure|verify|auth|update|reset)/i, penalty: -20, reason: 'Phishing keywords' },
+        { pattern: /(official|real|legit|genuine|authentic|trusted|verified)/i, penalty: -15, reason: 'Over-assertive legitimacy claims' },
+        { pattern: /[0o1il]{3,}/i, penalty: -12, reason: 'Character substitution pattern' },
+        { pattern: /(.)\1{3,}/, penalty: -10, reason: 'Repeated characters' },
+        { pattern: /(24|247|365|fast|instant|quick|best|top|super)/i, penalty: -8, reason: 'Urgency/superlative keywords' }, // "24" in flipshop24
+      ];
+
+      suspiciousPatterns.forEach(({ pattern, penalty, reason }) => {
+        if (pattern.test(lowerDomain)) {
+          namingScore += penalty;
+          console.log(`  - Domain Pattern: ${penalty} (${reason})`);
+        }
+      });
+
+      // REMOVED positive patterns - domains need to EARN trust, not get bonuses
+
+      // Check for excessive special characters
+      const specialCharCount = (lowerDomain.match(/[^a-z0-9.]/g) || []).length;
+      if (specialCharCount > 2) {
+        namingScore -= (specialCharCount - 2) * 5;
+        console.log(`  - Special Characters: -${(specialCharCount - 2) * 5} (${specialCharCount} special chars)`);
+      }
+
+      score += namingScore;
+      if (namingScore !== 0) {
+        console.log(`Domain Naming Score: ${namingScore >= 0 ? '+' : ''}${namingScore} (Total: ${score})`);
       }
     }
 
-    // Scam keywords penalty (up to -40 points)
-    if (scamKeywords.length > 0) {
-      score -= Math.min(40, scamKeywords.length * 15); // Increased from 10 to 15 per keyword
+    // TLD analysis - STRICTER
+    if (domainName) {
+      const lowerDomain = domainName.toLowerCase();
+      const trustedTLDs = ['.edu', '.gov', '.org']; // Only highly trusted
+      const goodTLDs = ['.com', '.net', '.co.uk', '.us', '.ca', '.de', '.fr', '.au', '.uk', '.nl']; // Common but not fully trusted
+      const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.club', '.info', '.work', '.click', '.link', '.pw', '.cc', '.ws', '.biz'];
+      
+      let tldScore = 0;
+      const hasHighlyTrustedTLD = trustedTLDs.some(tld => lowerDomain.endsWith(tld));
+      const hasGoodTLD = goodTLDs.some(tld => lowerDomain.endsWith(tld));
+      const hasSuspiciousTLD = suspiciousTLDs.some(tld => lowerDomain.endsWith(tld));
+      
+      if (hasHighlyTrustedTLD) {
+        tldScore = 15;
+        console.log(`TLD Score: +15 (Highly trusted TLD, Total: ${score + tldScore})`);
+      } else if (hasGoodTLD) {
+        tldScore = 5;
+        console.log(`TLD Score: +5 (Common TLD, Total: ${score + tldScore})`);
+      } else if (hasSuspiciousTLD) {
+        tldScore = -25;
+        console.log(`TLD Score: -25 (Suspicious TLD, Total: ${score + tldScore})`);
+      } else {
+        // Unknown TLD - penalty for obscure TLDs
+        tldScore = -10;
+        console.log(`TLD Score: -10 (Unknown/Uncommon TLD, Total: ${score + tldScore})`);
+      }
+      score += tldScore;
     }
 
-    // Domain length scoring (more detailed)
-    if (domainLength < 8) {
-      score += 15; // Very short, likely premium domain
-    } else if (domainLength < 15) {
-      score += 10; // Good length
-    } else if (domainLength < 25) {
-      score += 5; // Acceptable length
-    } else if (domainLength < 35) {
-      score -= 5; // Getting long
-    } else if (domainLength < 50) {
-      score -= 15; // Very long, suspicious
-    } else {
-      score -= 25; // Extremely long, highly suspicious
+    // Registrar reputation scoring - MORE STRICT
+    if (registrar && registrar !== "Analysis Complete") {
+      const lowerRegistrar = registrar.toLowerCase();
+      let registrarScore = 0;
+
+      // Trusted major registrars (only the best)
+      const trustedRegistrars = [
+        'google domains', 'cloudflare', 'amazon registrar', 'microsoft',
+        'godaddy', 'namecheap', 'gandi', 'enom', 'network solutions'
+      ];
+
+      // Moderate registrars (less bonus)
+      const moderateRegistrars = [
+        'name.com', 'hover', '1&1', 'tucows', 'bluehost',
+        'hostgator', 'domain.com', 'register.com', 'inwx', 'dynadot',
+        'ionos', 'ovh', 'key-systems'
+      ];
+
+      // Registrars often associated with abuse
+      const suspiciousRegistrars = [
+        'freenom', 'dot.tk', 'namecheap basic', 'pdr', 'wildwestdomains',
+        'registrar of domain names', 'bizcn', 'alibaba', 'hangzhou',
+        'eranet', 'onlinenic', 'west263', 'xin net', 'hichina', 'nicenic',
+        'cheap', 'discount', 'free', 'domains by proxy' // Privacy services can hide scammers
+      ];
+
+      const isTrusted = trustedRegistrars.some(trusted => lowerRegistrar.includes(trusted));
+      const isModerate = moderateRegistrars.some(moderate => lowerRegistrar.includes(moderate));
+      const isSuspicious = suspiciousRegistrars.some(suspicious => lowerRegistrar.includes(suspicious));
+
+      if (isTrusted) {
+        registrarScore = 10;
+        console.log(`Registrar Score: +10 (Trusted registrar: ${registrar}, Total: ${score + registrarScore})`);
+      } else if (isModerate) {
+        registrarScore = 5;
+        console.log(`Registrar Score: +5 (Moderate registrar: ${registrar}, Total: ${score + registrarScore})`);
+      } else if (isSuspicious) {
+        registrarScore = -25;
+        console.log(`Registrar Score: -25 (High-risk registrar: ${registrar}, Total: ${score + registrarScore})`);
+      } else if (lowerRegistrar.length > 5) {
+        // Unknown registrar - be cautious
+        registrarScore = -5;
+        console.log(`Registrar Score: -5 (Unknown registrar: ${registrar}, Total: ${score + registrarScore})`);
+      }
+
+      score += registrarScore;
+    } else if (registrar === null || registrar === "Analysis Complete") {
+      // Missing registrar information - penalty (hiding info is suspicious)
+      score -= 10;
+      console.log(`Registrar Score: -10 (No registrar information, Total: ${score})`);
     }
 
-    // TLD analysis (bonus points for common TLDs)
-    const domain = domainLength.toString(); // This is a placeholder, actual domain would be passed
-    const trustedTLDs = ['.com', '.org', '.edu', '.gov', '.net'];
-    const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.club'];
-    
-    // Note: In actual implementation, we'd check the actual domain TLD
-    // For now, this is a framework for TLD scoring
+    const finalScore = Math.max(0, Math.min(100, score));
+    console.log(`Final Score (clamped 0-100): ${finalScore}`);
+    console.log('===================================');
 
-    return Math.max(0, Math.min(100, score));
+    return finalScore;
   };
 
   const getVerdict = (score: number): { verdict: string; color: string; bgColor: string } => {
@@ -1332,7 +1482,7 @@ Format as JSON:
       const domainDetails = await fetchDomainDetails(domain, 0);
       
       // Calculate actual domain age from registration date
-      let actualDomainAge = 0;
+      let actualDomainAge: number | null = null;
       let domainAgeText = "Information not available";
       
       if (domainDetails.registrationDate !== "Information not available") {
@@ -1340,27 +1490,34 @@ Format as JSON:
           const regDate = new Date(domainDetails.registrationDate);
           const currentDate = new Date();
           const ageInYears = (currentDate.getTime() - regDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
-          actualDomainAge = Math.floor(ageInYears);
           
-          if (actualDomainAge < 1) {
-            const ageInMonths = Math.floor(ageInYears * 12);
-            domainAgeText = ageInMonths > 0 ? `~${ageInMonths} month${ageInMonths !== 1 ? 's' : ''}` : "Less than 1 month";
-          } else {
-            domainAgeText = `~${actualDomainAge} year${actualDomainAge !== 1 ? 's' : ''}`;
+          // Only set actualDomainAge if we got a valid date
+          if (!isNaN(ageInYears) && ageInYears >= 0) {
+            actualDomainAge = ageInYears;
+            
+            if (actualDomainAge < 1) {
+              const ageInMonths = Math.floor(ageInYears * 12);
+              domainAgeText = ageInMonths > 0 ? `~${ageInMonths} month${ageInMonths !== 1 ? 's' : ''}` : "Less than 1 month";
+            } else {
+              domainAgeText = `~${Math.floor(actualDomainAge)} year${Math.floor(actualDomainAge) !== 1 ? 's' : ''}`;
+            }
           }
         } catch (error) {
           console.error("Error calculating domain age:", error);
           domainAgeText = "Unable to calculate";
+          actualDomainAge = null;
         }
       }
       
-      // Calculate trust score with phishing detection
+      // Calculate trust score with all parameters including domain name and registrar
       const trustScore = calculateTrustScore(
         actualDomainAge,
         sslCheck.hasSSL,
         scamKeywords,
         domain.length,
-        phishingDetection.confidence
+        phishingDetection.confidence,
+        domain, // Pass the actual domain name for TLD analysis
+        domainDetails.registrar // Pass registrar for reputation scoring
       );
 
       // Get verdict
@@ -1607,7 +1764,7 @@ Format as JSON:
                 <p className="text-slate-600 text-sm">{t.description}</p>
               </div>
               
-              <form onSubmit={(e) => { e.preventDefault(); analyzeWebsite(); }} className="space-y-6">
+              <form onSubmit={(e) => { e.preventDefault(); analyzeWebsite(); }} className="space-y-2">
                 <div className="w-full">
                   <label htmlFor="url" className="block text-base font-semibold text-slate-700 mb-3">
                     {t.inputLabel}
@@ -1911,21 +2068,102 @@ Format as JSON:
                       </div>
                     </div>
                     
-                    <div className="text-center mb-4 sm:mb-6">
-                      <div className={`inline-flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 rounded-full shadow-2xl mb-3 sm:mb-4 animate-scale-in ${
-                        result.trustScore >= 80 
-                          ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
-                          : result.trustScore >= 60 
-                          ? 'bg-gradient-to-br from-yellow-500 to-orange-500' 
-                          : result.trustScore >= 40
-                          ? 'bg-gradient-to-br from-orange-500 to-red-500'
-                          : 'bg-gradient-to-br from-red-600 to-rose-700'
-                      }`}>
-                        <span className="text-4xl sm:text-5xl font-bold text-white">{result.trustScore}</span>
+                    <div className="text-center mb-6 sm:mb-8">
+                      {/* Circular Trust Score Gauge - ScamAdviser Style */}
+                      <div className="inline-block relative mb-4">
+                        <svg 
+                          className="w-64 h-40 sm:w-80 sm:h-48 md:w-96 md:h-56 mx-auto" 
+                          viewBox="0 0 300 200"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <defs>
+                            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor={
+                                result.trustScore >= 80 ? '#10b981' : 
+                                result.trustScore >= 60 ? '#f59e0b' : 
+                                result.trustScore >= 40 ? '#f97316' : '#dc2626'
+                              } />
+                              <stop offset="100%" stopColor={
+                                result.trustScore >= 80 ? '#059669' : 
+                                result.trustScore >= 60 ? '#d97706' : 
+                                result.trustScore >= 40 ? '#ea580c' : '#b91c1c'
+                              } />
+                            </linearGradient>
+                          </defs>
+                          
+                          {/* Background Arc (Light Gray) - Full semi-circle */}
+                          <path
+                            d="M 50 170 A 100 100 0 0 1 250 170"
+                            fill="none"
+                            stroke="#e5e7eb"
+                            strokeWidth="32"
+                            strokeLinecap="round"
+                          />
+                          
+                          {/* Colored Progress Arc */}
+                          <path
+                            d="M 50 170 A 100 100 0 0 1 250 170"
+                            fill="none"
+                            stroke="url(#gaugeGradient)"
+                            strokeWidth="32"
+                            strokeLinecap="round"
+                            strokeDasharray={`${(result.trustScore / 100) * 314.16} 314.16`}
+                            className="transition-all duration-1000 ease-out"
+                            style={{
+                              animation: 'drawArc 1.5s ease-out forwards'
+                            }}
+                          />
+                          
+                          {/* "Trustscore" Label */}
+                          <text
+                            x="150"
+                            y="105"
+                            textAnchor="middle"
+                            className="fill-slate-800"
+                            style={{ fontSize: '22px', fontWeight: '600', letterSpacing: '0.5px' }}
+                          >
+                            
+                          </text>
+                          
+                          {/* Trust Score Number */}
+                          <text
+                            x="150"
+                            y="160"
+                            textAnchor="middle"
+                            className={`font-bold ${
+                              result.trustScore >= 80 ? 'fill-emerald-500' : 
+                              result.trustScore >= 60 ? 'fill-yellow-500' : 
+                              result.trustScore >= 40 ? 'fill-orange-500' : 'fill-red-500'
+                            }`}
+                            style={{ fontSize: '72px', fontWeight: '700' }}
+                          >
+                            {result.trustScore}
+                          </text>
+                          
+                          {/* "/ 100" Text */}
+                          <text
+                            x="150"
+                            y="188"
+                            textAnchor="middle"
+                            className="fill-slate-400"
+                            style={{ fontSize: '24px', fontWeight: '500' }}
+                          >
+                            / 100
+                          </text>
+                        </svg>
+                        
                       </div>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{result.verdict}</p>
-                      <p className="text-sm sm:text-base text-slate-600">{t.trustScore}: {result.trustScore}/100</p>
+                      
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">{result.verdict}</p>
                     </div>
+                    
+                    <style>{`
+                      @keyframes drawArc {
+                        from {
+                          stroke-dasharray: 0 219.91;
+                        }
+                      }
+                    `}</style>
 
                     {/* Phishing Warning - Critical Alert */}
                     {result.phishingDetection && (
@@ -2303,6 +2541,31 @@ Format as JSON:
                                 <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{result.registrar}</p>
                               ) : (
                                 <p className="text-xs sm:text-sm font-bold text-slate-500 leading-tight">Information not available</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Organization */}
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">Organization</p>
+                              {result.registrantContact ? (
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 break-words leading-tight">{result.registrantContact}</p>
+                              ) : (
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-amber-600">{t.privacyProtected}</span>
+                                </div>
                               )}
                             </div>
                           </div>
