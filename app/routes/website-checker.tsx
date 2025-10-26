@@ -1904,7 +1904,7 @@ Format as JSON:
                   {/* Check if domain is not registered */}
                   {result.registrationDate === "Information not available" && result.domainAge === "Information not available" ? (
                     /* Domain Not Registered - Premium Design with Pricing */
-                    <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-200">
+                    <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-5 border border-slate-200">
                       <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-slate-50 border-2 border-blue-200">
                         {/* Header removed to avoid provider branding */}
 
