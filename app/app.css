@@ -219,3 +219,9 @@ form {
 .animate-scale-in {
   animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Generic animation delay helpers to avoid inline styles */
+.delay-500 { animation-delay: 0.5s; }
+.delay-1000 { animation-delay: 1s; }
+.delay-1500 { animation-delay: 1.5s; }
+.delay-2000 { animation-delay: 2s; }

@@ -5,7 +5,8 @@ export const meta = () => [
   { title: "Website Legitimacy Checker - AI-Powered Security Analysis | Abbas Logic" },
   {
     name: "description",
-    content: "Check if a website is safe and legitimate using AI-powered analysis. Get trust scores, safety recommendations, and detailed security insights.",
+    content:
+      "Check if a website is safe and legitimate using AI-powered analysis. Get trust scores, safety recommendations, and detailed security insights.",
   },
 ];
 
@@ -25,6 +26,8 @@ interface WebsiteAnalysis {
   registrationDate?: string;
   contactEmail?: string | null;
   contactPhone?: string | null;
+  registrantContact?: string | null;
+  nameservers?: string[];
   phishingDetection?: {
     isPhishing: boolean;
     confidence: number;
@@ -63,6 +66,18 @@ export default function WebsiteChecker() {
   const [result, setResult] = useState<WebsiteAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportType, setReportType] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  // Live pricing state (for unregistered domains)
+  const [pricingOffers, setPricingOffers] = useState<
+    | null
+    | Array<{ provider: string; url: string; price: string | null; offer: string | null; freebies?: string[] }>
+  >(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingError, setPricingError] = useState<string | null>(null);
+  // Deprecated secondary pricing cache (removed to avoid duplication)
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Scroll to results when analysis completes
@@ -73,6 +88,38 @@ export default function WebsiteChecker() {
       }, 100);
     }
   }, [result]);
+
+  // Fetch live pricing when domain appears unregistered
+  useEffect(() => {
+    const isUnregistered =
+      result && result.registrationDate === "Information not available" && result.domainAge === "Information not available";
+    if (!isUnregistered || !result?.domainName) {
+      setPricingOffers(null);
+      setPricingLoading(false);
+      setPricingError(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        setPricingLoading(true);
+        setPricingError(null);
+        const res = await fetch(`/api.pricing?domain=${encodeURIComponent(result.domainName!)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) {
+          setPricingOffers(Array.isArray(data?.offers) ? data.offers : null);
+        }
+      } catch (e: any) {
+        if (!cancelled) setPricingError(e?.message || "Failed to load pricing");
+      } finally {
+        if (!cancelled) setPricingLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [result?.domainName, result?.registrationDate, result?.domainAge]);
 
   // Add print styles
   useEffect(() => {
@@ -117,6 +164,8 @@ export default function WebsiteChecker() {
       document.head.removeChild(style);
     };
   }, []);
+
+  // NOTE: removed duplicate /api/pricing fetch; we already fetch from /api.pricing above
 
   const validateUrl = (urlString: string): boolean => {
     if (!urlString.trim()) {
@@ -526,6 +575,86 @@ Format your response as JSON:
     return { reasons, safetyTips };
   };
 
+  // Pricing and offers for unregistered domains
+  interface DomainOffer {
+    provider: string;
+    url: string;
+    // Optional indicative pricing (estimates). We prefer live pricing on provider pages.
+    typical?: string; // e.g. "~$9.99/yr for .com"
+    renewal?: string; // e.g. "~$15.99/yr"
+    freebies?: string[]; // included features, e.g. ["WHOIS Privacy", "SSL"]
+    badge?: string; // e.g. "Best Deal"
+    highlight?: boolean; // visually emphasize
+  }
+
+  const getTld = (domain: string): string => {
+    if (!domain) return '';
+    const lower = domain.toLowerCase();
+    if (lower.endsWith('.co.uk')) return 'co.uk';
+    const parts = lower.split('.');
+    return parts.length > 1 ? parts[parts.length - 1] : '';
+  };
+
+  const getDomainPricing = (domain: string): DomainOffer[] => {
+    const tld = getTld(domain);
+    // Baseline pricing map (estimates). In production, fetch live pricing from providers.
+    const base: Record<string, { h: number; nc: number; gd: number; renewH?: number; renewNC?: number; renewGD?: number }> = {
+      'com': { h: 9.99, nc: 10.98, gd: 11.99, renewH: 15.99, renewNC: 15.98, renewGD: 21.99 },
+      'net': { h: 12.99, nc: 13.98, gd: 14.99, renewH: 16.99, renewNC: 16.98, renewGD: 22.99 },
+      'org': { h: 11.99, nc: 11.98, gd: 12.99, renewH: 15.99, renewNC: 15.98, renewGD: 21.99 },
+      'io': { h: 39.99, nc: 44.98, gd: 59.99, renewH: 44.99, renewNC: 54.98, renewGD: 69.99 },
+      'ai': { h: 59.99, nc: 69.98, gd: 69.99, renewH: 69.99, renewNC: 79.98, renewGD: 79.99 },
+      'co.uk': { h: 6.99, nc: 7.98, gd: 7.99, renewH: 9.99, renewNC: 10.98, renewGD: 11.99 },
+    };
+    const fallback = { h: 9.99, nc: 10.99, gd: 12.99, renewH: 14.99, renewNC: 14.99, renewGD: 19.99 };
+    const row = base[tld] || fallback;
+
+  const format = (n?: number) => (n ? `$${n.toFixed(2)}/yr` : undefined);
+  const typicalLabel = (n?: number) => (n ? `~${format(n)} for .${tld || 'com'}` : undefined);
+
+    const hostingerUrl = `https://www.hostinger.com/domain-name-results?domain=${encodeURIComponent(domain)}&REFERRALCODE=1TEAMTECH21&from=domain-name-search`;
+    const namecheapUrl = `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`;
+    const godaddyUrl = `https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${encodeURIComponent(domain)}`;
+
+    return [
+      {
+        provider: 'Hostinger',
+        url: hostingerUrl,
+        typical: typicalLabel(row.h),
+        renewal: typicalLabel(row.renewH),
+        freebies: ['WHOIS Privacy', 'SSL Support', '1-Click DNS'],
+        badge: 'Best Value',
+        highlight: true,
+      },
+      {
+        provider: 'Namecheap',
+        url: namecheapUrl,
+        typical: typicalLabel(row.nc),
+        renewal: typicalLabel(row.renewNC),
+        freebies: ['WHOIS Privacy', 'Email Forwarding'],
+        badge: 'Popular',
+      },
+      {
+        provider: 'GoDaddy',
+        url: godaddyUrl,
+        typical: typicalLabel(row.gd),
+        renewal: typicalLabel(row.renewGD),
+        freebies: ['Fast DNS', 'Support'],
+      },
+    ];
+  };
+
+  // Tailwind-safe width classes for progress (0%..100% in 5% steps)
+  const WIDTH_CLASSES = [
+    'w-[0%]','w-[5%]','w-[10%]','w-[15%]','w-[20%]','w-[25%]','w-[30%]','w-[35%]','w-[40%]','w-[45%]',
+    'w-[50%]','w-[55%]','w-[60%]','w-[65%]','w-[70%]','w-[75%]','w-[80%]','w-[85%]','w-[90%]','w-[95%]','w-[100%]'
+  ] as const;
+  const progressWidthClass = (pct?: number) => {
+    const n = Math.max(0, Math.min(100, Math.round((pct || 0) / 5) * 5));
+    const idx = Math.round(n / 5);
+    return WIDTH_CLASSES[idx];
+  };
+
   const fetchUserReports = async (domain: string, trustScore: number) => {
     // Simulate fetching user reports from various sources
     // In production, this would integrate with APIs like:
@@ -649,9 +778,9 @@ Format as JSON:
     }
 
     // Fallback analysis based on basic metrics
-    const trustLikelihood = trustScore;
-    let riskLevel = 'Medium';
-    let riskColor = 'text-yellow-600';
+  const trustLikelihood = trustScore;
+  let riskLevel = 'Medium';
+  let riskColor = 'text-yellow-600';
     
     if (trustScore >= 80) {
       riskLevel = 'Low';
@@ -667,7 +796,7 @@ Format as JSON:
       riskColor = 'text-red-600';
     }
 
-    const aiInsights = [];
+  const aiInsights: string[] = [];
     const domainLength = domain.length;
     
     if (phishingInfo?.isPhishing) {
@@ -711,15 +840,53 @@ Format as JSON:
       }
     ];
 
+    // Tailored recommendation by score and phishing signal
+    let recommendation = '';
+    if (phishingInfo?.isPhishing && (phishingInfo.confidence ?? 0) >= 60) {
+      recommendation = [
+        'Critical risk: Do NOT proceed.',
+        'Close the site immediately and avoid clicking any links.',
+        'Do not enter passwords or payment details.',
+        'If you interacted already, change affected passwords and contact your bank.'
+      ].join(' \n• ');
+      recommendation = '• ' + recommendation; // bullet formatting
+    } else if (trustScore >= 80) {
+      recommendation = [
+        'Looks trustworthy: you can proceed.',
+        'Still verify the URL spelling and padlock (HTTPS).',
+        'Use strong, unique passwords and enable 2FA when possible.'
+      ].join(' \n• ');
+      recommendation = '• ' + recommendation;
+    } else if (trustScore >= 60) {
+      recommendation = [
+        'Likely safe: proceed with caution.',
+        'Avoid sharing sensitive data unless necessary.',
+        'Prefer guest checkout or a trusted payment provider.'
+      ].join(' \n• ');
+      recommendation = '• ' + recommendation;
+    } else if (trustScore >= 40) {
+      recommendation = [
+        'Use high caution: limited trust signals.',
+        'Do not enter personal or payment information.',
+        'Search for independent reviews before using this site.'
+      ].join(' \n• ');
+      recommendation = '• ' + recommendation;
+    } else {
+      recommendation = [
+        'High risk: avoid this site.',
+        'Do not download files or submit any forms.',
+        'Consider reporting this website if it looks fraudulent.'
+      ].join(' \n• ');
+      recommendation = '• ' + recommendation;
+    }
+
     return {
       trustLikelihood,
       riskLevel,
       riskColor,
       aiInsights,
       domainCharacteristics,
-      recommendation: trustScore >= 60 
-        ? 'Website appears relatively safe, but always verify before sharing sensitive information.'
-        : 'Exercise extreme caution. Avoid entering personal or financial information.'
+      recommendation
     };
   };
 
@@ -757,9 +924,28 @@ Format as JSON:
         // Extract contact information from entities
         let contactEmail = null;
         let contactPhone = null;
+        let registrar = null;
+        let registrantContact = null;
+        let nameservers: string[] = [];
         
         if (rdapData.entities && Array.isArray(rdapData.entities)) {
           for (const entity of rdapData.entities) {
+            // Extract registrar
+            if (entity.roles && entity.roles.includes('registrar') && entity.vcardArray) {
+              const fnField = entity.vcardArray[1]?.find((f: any) => f[0] === 'fn');
+              if (fnField && fnField[3]) {
+                registrar = fnField[3];
+              }
+            }
+            
+            // Extract registrant contact
+            if (entity.roles && entity.roles.includes('registrant') && entity.vcardArray) {
+              const fnField = entity.vcardArray[1]?.find((f: any) => f[0] === 'fn');
+              if (fnField && fnField[3]) {
+                registrantContact = fnField[3];
+              }
+            }
+            
             // Check vcardArray for contact info
             if (entity.vcardArray && Array.isArray(entity.vcardArray) && entity.vcardArray[1]) {
               for (const field of entity.vcardArray[1]) {
@@ -776,12 +962,22 @@ Format as JSON:
           }
         }
 
-        console.log('Extracted data:', { registrationDate, contactEmail, contactPhone });
+        // Extract nameservers
+        if (rdapData.nameservers && Array.isArray(rdapData.nameservers)) {
+          nameservers = rdapData.nameservers
+            .map((ns: any) => ns.ldhName || ns.unicodeName)
+            .filter((name: any) => name);
+        }
+
+        console.log('Extracted data:', { registrationDate, contactEmail, contactPhone, registrar, registrantContact, nameservers });
 
         return {
           registrationDate,
           contactEmail,
-          contactPhone
+          contactPhone,
+          registrar,
+          registrantContact,
+          nameservers
         };
       }
     } catch (error) {
@@ -825,10 +1021,33 @@ Format as JSON:
         const phoneMatch = htmlText.match(/Phone:\s*([+\d\s()-]+)/i);
         const contactPhone = phoneMatch ? phoneMatch[1].trim() : null;
 
+        // Parse for registrar
+        const registrarMatch = htmlText.match(/Registrar:\s*([^\n<]+)/i) ||
+                              htmlText.match(/Sponsoring Registrar:\s*([^\n<]+)/i);
+        const registrar = registrarMatch ? registrarMatch[1].trim() : null;
+
+        // Parse for registrant contact
+        const registrantMatch = htmlText.match(/Registrant(?:\s+Name)?:\s*([^\n<]+)/i) ||
+                               htmlText.match(/Registrant Organization:\s*([^\n<]+)/i);
+        const registrantContact = registrantMatch ? registrantMatch[1].trim() : null;
+
+        // Parse for nameservers
+        const nameservers: string[] = [];
+        const nsMatches = htmlText.matchAll(/(?:Name Server|Nameserver|DNS):\s*([^\n<]+)/gi);
+        for (const match of nsMatches) {
+          const ns = match[1].trim().toLowerCase();
+          if (ns && !nameservers.includes(ns)) {
+            nameservers.push(ns);
+          }
+        }
+
         return {
           registrationDate,
           contactEmail,
-          contactPhone
+          contactPhone,
+          registrar,
+          registrantContact,
+          nameservers
         };
       }
     } catch (error) {
@@ -857,8 +1076,11 @@ Format as JSON:
 
         return {
           registrationDate,
-          contactEmail: ipwhoisData.registrar_email || null,
-          contactPhone: ipwhoisData.registrar_phone || null
+          contactEmail: ipwhoisData.registrar_email || ipwhoisData.abuse_email || null,
+          contactPhone: ipwhoisData.registrar_phone || ipwhoisData.abuse_phone || null,
+          registrar: ipwhoisData.registrar || ipwhoisData.org || ipwhoisData.asn_org || null,
+          registrantContact: ipwhoisData.registrant || ipwhoisData.registrant_name || ipwhoisData.registrant_organization || ipwhoisData.org || null,
+          nameservers: ipwhoisData.nameservers || []
         };
       }
     } catch (error) {
@@ -870,8 +1092,39 @@ Format as JSON:
     return {
       registrationDate: "Information not available",
       contactEmail: null,
-      contactPhone: null
+      contactPhone: null,
+      registrar: null,
+      registrantContact: null,
+      nameservers: []
     };
+  };
+
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!reportType) {
+      alert("Please select a report type");
+      return;
+    }
+
+    setReportSubmitting(true);
+
+    try {
+      // Simulate report submission (you can replace this with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Show success message
+      alert(`Thank you for your report! We'll review the ${reportType} report for ${result?.domainName}.`);
+      
+      // Reset form and close modal
+      setReportType("");
+      setReportDetails("");
+      setShowReportModal(false);
+    } catch (error) {
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setReportSubmitting(false);
+    }
   };
 
   const analyzeWebsite = async () => {
@@ -975,13 +1228,15 @@ Format as JSON:
         safetyTips: aiAnalysis.safetyTips,
         domainAge: domainAgeText,
         sslStatus: sslCheck.message,
-        registrar: "Analysis Complete",
+        registrar: domainDetails.registrar || "Information not available",
         domainName: domain,
         protocol: sslCheck.hasSSL ? "HTTPS (Secure)" : "HTTP (Unsecured)",
         lastChecked: new Date().toLocaleString(),
         registrationDate: domainDetails.registrationDate,
         contactEmail: domainDetails.contactEmail,
         contactPhone: domainDetails.contactPhone,
+        registrantContact: domainDetails.registrantContact,
+        nameservers: domainDetails.nameservers || [],
         phishingDetection: phishingDetection.isPhishing ? phishingDetection : undefined,
         userReports,
         aiTrustAnalysis
@@ -1097,7 +1352,7 @@ Format as JSON:
   const t = translations[language];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
+  <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white">
       <Navbar />
 
       <section className="relative pt-20 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -1106,25 +1361,25 @@ Format as JSON:
           <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="lightning-gradient-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.15 }} />
-                <stop offset="50%" style={{ stopColor: '#60a5fa', stopOpacity: 0.1 }} />
-                <stop offset="100%" style={{ stopColor: '#93c5fd', stopOpacity: 0.05 }} />
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15" />
+                <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.10" />
+                <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.05" />
               </linearGradient>
             </defs>
             
             {/* Lightning bolts */}
-            <path className="animate-pulse" d="M 100 -50 L 150 200 L 120 200 L 180 500" 
+    <path className="animate-pulse" d="M 100 -50 L 150 200 L 120 200 L 180 500" 
                   stroke="url(#lightning-gradient-blue)" strokeWidth="2" fill="none" opacity="0.2"/>
-            <path className="animate-pulse" style={{ animationDelay: '0.5s' }} 
+    <path className="animate-pulse delay-500" 
                   d="M 300 -100 L 320 150 L 290 150 L 340 400" 
                   stroke="url(#lightning-gradient-blue)" strokeWidth="2" fill="none" opacity="0.15"/>
-            <path className="animate-pulse" style={{ animationDelay: '1s' }} 
+    <path className="animate-pulse delay-1000" 
                   d="M 500 50 L 520 250 L 490 250 L 540 500" 
                   stroke="url(#lightning-gradient-blue)" strokeWidth="2" fill="none" opacity="0.12"/>
-            <path className="animate-pulse" style={{ animationDelay: '1.5s' }} 
+    <path className="animate-pulse delay-1500" 
                   d="M 700 -20 L 730 180 L 700 180 L 760 450" 
                   stroke="url(#lightning-gradient-blue)" strokeWidth="2" fill="none" opacity="0.18"/>
-            <path className="animate-pulse" style={{ animationDelay: '2s' }} 
+    <path className="animate-pulse delay-2000" 
                   d="M 900 30 L 920 220 L 890 220 L 950 480" 
                   stroke="url(#lightning-gradient-blue)" strokeWidth="2" fill="none" opacity="0.15"/>
           </svg>
@@ -1150,7 +1405,7 @@ Format as JSON:
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
             {/* Left Section - Input Form (4 columns) */}
-            <div className="no-print lg:col-span-4 bg-white rounded-3xl shadow-2xl p-6 sm:p-10 border border-gray-100 lg:sticky lg:top-24">
+            <div className="no-print lg:col-span-4 bg-white rounded-3xl shadow-2xl p-6 sm:p-10 border border-slate-200 lg:sticky lg:top-24">
               <div className="mb-8">
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{t.title}</h2>
                 <p className="text-slate-600 text-sm">{t.description}</p>
@@ -1167,8 +1422,8 @@ Format as JSON:
                     value={url}
                     onChange={(e) => handleInputChange(e.target.value)}
                     placeholder={t.inputPlaceholder}
-                    className={`w-full px-6 py-5 text-lg border-2 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.url ? "border-red-500" : "border-gray-200"
+                    className={`w-full px-6 py-5 text-lg border-2 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-100 focus:border-cyan-500 transition-all ${
+                      errors.url ? "border-red-500" : "border-slate-200"
                     }`}
                   />
                   {errors.url && (
@@ -1197,7 +1452,7 @@ Format as JSON:
             {/* Right Section - Results (8 columns - wider) */}
             <div className="lg:col-span-8">
               {analyzing || loading ? (
-                <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-12 border border-gray-100 flex items-center justify-center min-h-[500px]">
+                <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-12 border border-slate-200 flex items-center justify-center min-h-[500px]">
                   <div className="text-center">
                     {/* Animated SVG Loader */}
                     <div className="relative w-32 h-32 mx-auto mb-6">
@@ -1223,8 +1478,8 @@ Format as JSON:
                         />
                         <defs>
                           <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style={{ stopColor: '#3b82f6' }} />
-                            <stop offset="100%" style={{ stopColor: '#06b6d4' }} />
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#06b6d4" />
                           </linearGradient>
                         </defs>
                       </svg>
@@ -1298,18 +1553,9 @@ Format as JSON:
                     /* Domain Not Registered - Premium Design with Pricing */
                     <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-200">
                       <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-slate-50 border-2 border-blue-200">
-                        {/* Premium Sponsored Badge */}
-                        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                            <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-wide">Sponsored Partner</span>
-                          </div>
-                          <span className="text-xs text-blue-100 hidden sm:block">Hostinger</span>
-                        </div>
+                        {/* Header removed to avoid provider branding */}
 
-                        <div className="p-6 sm:p-8 lg:p-10">
+                        <div className="p-5 sm:p-6 lg:p-7">
                           {/* Status Badge & Icon */}
                           <div className="text-center mb-8">
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full mb-6">
@@ -1326,122 +1572,104 @@ Format as JSON:
                             </p>
                           </div>
 
-                          {/* Pricing Section */}
-                          <div className="mb-8">
-                            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-blue-100">
-                              <div className="flex items-baseline justify-center gap-2 mb-3">
-                                <span className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                                  Check
-                                </span>
-                              </div>
-                              <p className="text-center text-slate-600 text-sm mb-4">
-                                View current pricing & special offers
-                              </p>
-                              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mx-auto">
-                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="text-xs font-bold text-white">Special Deals Available</span>
-                              </div>
-                            </div>
-                          </div>
+                          {/* Enhanced Pricing Card - Price in USD, Offer, Freebies, Trust Factors */}
+                          {(() => {
+                            const hostinger = (pricingOffers || [])
+                              .filter(o => (o.provider || '').toLowerCase() === 'hostinger')
+                              .map(o => ({
+                                url: o.url,
+                                price: o.price,
+                                offer: o.offer,
+                                freebies: o.freebies || ['WHOIS Privacy','SSL Support','1-Click DNS']
+                              }));
 
-                          {/* Features Grid */}
-                          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
-                            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-lg">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                              </div>
-                              <div className="text-left">
-                                <p className="text-xs font-semibold text-slate-900">Instant Setup</p>
-                                <p className="text-xs text-slate-600">Ready in minutes</p>
-                              </div>
-                            </div>
+                            const fallbackUrl = `https://www.hostinger.com/domain-name-results?domain=${encodeURIComponent(result.domainName || '')}&REFERRALCODE=1TEAMTECH21&from=domain-name-search`;
+                            const offerData = hostinger.length > 0 ? hostinger[0] : {
+                              url: fallbackUrl, price: null, offer: null,
+                              freebies: ['WHOIS Privacy','SSL Support','1-Click DNS']
+                            };
 
-                            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-lg">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                              </div>
-                              <div className="text-left">
-                                <p className="text-xs font-semibold text-slate-900">Free Privacy</p>
-                                <p className="text-xs text-slate-600">WHOIS protection</p>
-                              </div>
-                            </div>
+                            return (
+                              <div className="mb-6">
+                                <a
+                                  href={offerData.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer sponsored"
+                                  className="group block bg-white rounded-xl shadow-lg border border-cyan-300 p-6 hover:shadow-xl transition-all"
+                                >
+                                  {/* Price and Buy Section */}
+                                  <div className="flex items-center justify-between gap-6 mb-5 pb-5 border-b border-slate-100">
+                                    <div className="flex-1">
+                                      {offerData.price ? (
+                                        <>
+                                          <div className="flex items-baseline gap-3 mb-2">
+                                            <div className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                              {offerData.price}
+                                            </div>
+                                            <div className="text-lg font-semibold text-slate-900">USD</div>
+                                          </div>
+                                          <div className="text-sm text-slate-600 font-medium">First year registration</div>
+                                        </>
+                                      ) : (
+                                        <div className="text-2xl font-bold text-slate-700 mb-2">Live pricing available</div>
+                                      )}
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                      <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl text-white font-bold text-base group-hover:from-blue-500 group-hover:to-cyan-500 transition-all shadow-lg">
+                                        Buy Now
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                        </svg>
+                                      </div>
+                                    </div>
+                                  </div>
 
-                            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-lg">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <div className="text-left">
-                                <p className="text-xs font-semibold text-slate-900">Free Email</p>
-                                <p className="text-xs text-slate-600">Professional inbox</p>
-                              </div>
-                            </div>
+                                  {/* Freebies Section - Compact */}
+                                  {offerData.freebies && offerData.freebies.length > 0 && (
+                                    <div className="mb-4 pb-4 border-b border-slate-100">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-medium text-slate-600">Includes:</span>
+                                        {offerData.freebies.map((f) => (
+                                          <span key={f} className="text-xs px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700">
+                                            {f}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
 
-                            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-lg">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
+                                  {/* Trust Factors */}
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="flex items-center gap-2">
+                                      <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                      </svg>
+                                      <span className="text-xs font-semibold text-slate-700">Secure</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      <span className="text-xs font-semibold text-slate-700">Refund</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <svg className="w-5 h-5 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                      <span className="text-xs font-semibold text-slate-700">Trusted</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <svg className="w-5 h-5 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                      </svg>
+                                      <span className="text-xs font-semibold text-slate-700">Instant</span>
+                                    </div>
+                                  </div>
+                                </a>
+                                <p className="mt-3 text-center text-xs text-slate-500">Price is fetched live and may vary by region. USD pricing shown.</p>
                               </div>
-                              <div className="text-left">
-                                <p className="text-xs font-semibold text-slate-900">24/7 Support</p>
-                                <p className="text-xs text-slate-600">Always available</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Premium CTA Button */}
-                          <a
-                            href={`https://www.hostinger.com/domain-name-results?domain=${result.domainName}&REFERRALCODE=1TEAMTECH21&from=domain-name-search`}
-                            target="_blank"
-                            rel="noopener noreferrer sponsored"
-                            className="group relative block w-full overflow-hidden rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-600 animate-gradient"></div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div className="relative flex items-center justify-center gap-3 px-8 py-5 text-white">
-                              <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                              </svg>
-                              <span className="font-bold text-lg sm:text-xl">Register Domain Now</span>
-                              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                              </svg>
-                            </div>
-                          </a>
-
-                          {/* Trust Badges */}
-                          <div className="mt-6 pt-6 border-t border-slate-200">
-                            <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
-                              <div className="flex items-center gap-1.5">
-                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                                <span className="font-medium">Secure Payment</span>
-                              </div>
-                              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                              <div className="flex items-center gap-1.5">
-                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="font-medium">Money Back Guarantee</span>
-                              </div>
-                              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                              <div className="flex items-center gap-1.5">
-                                <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                <span className="font-medium">Trusted by 2M+</span>
-                              </div>
-                            </div>
-                          </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -1456,29 +1684,50 @@ Format as JSON:
                   </div>
 
                   {/* Single Card with All Results */}
-                  <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 border border-gray-100">
-                    {/* Header with Print Button */}
+                  <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-6 border border-slate-200">
+                    {/* Header with Action Buttons */}
                     <div className="flex items-center justify-between mb-4 sm:mb-6">
                       <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.verdict}</h2>
                       
-                      {/* Print PDF Button */}
-                      <button
-                        onClick={() => window.print()}
-                        className="no-print group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-semibold text-sm hover:from-blue-600 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
-                      >
-                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        <span className="hidden sm:inline">Print Report</span>
-                        <span className="sm:hidden">Print</span>
-                      </button>
+                      <div className="no-print flex items-center gap-2">
+                        {/* Report Button */}
+                        <button
+                          onClick={() => setShowReportModal(true)}
+                          className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-semibold text-sm hover:from-red-600 hover:to-rose-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        >
+                          <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span className="hidden sm:inline">Report</span>
+                        </button>
+
+                        {/* Print PDF Button */}
+                        <button
+                          onClick={() => window.print()}
+                          className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-semibold text-sm hover:from-blue-600 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        >
+                          <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          </svg>
+                          <span className="hidden sm:inline">Print Report</span>
+                          <span className="sm:hidden">Print</span>
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="text-center mb-4 sm:mb-6">
-                      <div className="inline-flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 shadow-2xl mb-3 sm:mb-4 animate-scale-in">
+                      <div className={`inline-flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 rounded-full shadow-2xl mb-3 sm:mb-4 animate-scale-in ${
+                        result.trustScore >= 80 
+                          ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                          : result.trustScore >= 60 
+                          ? 'bg-gradient-to-br from-yellow-500 to-orange-500' 
+                          : result.trustScore >= 40
+                          ? 'bg-gradient-to-br from-orange-500 to-red-500'
+                          : 'bg-gradient-to-br from-red-600 to-rose-700'
+                      }`}>
                         <span className="text-4xl sm:text-5xl font-bold text-white">{result.trustScore}</span>
                       </div>
-                      <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${result.verdictColor} mb-2`}>{result.verdict}</p>
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{result.verdict}</p>
                       <p className="text-sm sm:text-base text-slate-600">{t.trustScore}: {result.trustScore}/100</p>
                     </div>
 
@@ -1538,9 +1787,9 @@ Format as JSON:
                     {/* AI Trust Analysis Section */}
                     {result.aiTrustAnalysis && (
                       <div className="mb-8">
-                        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-5 sm:p-6 border-2 border-purple-200 shadow-xl">
+                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 sm:p-6 border-2 border-blue-200 shadow-xl">
                           <div className="flex items-center gap-3 mb-5">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
                               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                               </svg>
@@ -1553,21 +1802,21 @@ Format as JSON:
 
                           {/* Trust Likelihood & Risk Level */}
                           <div className="grid grid-cols-2 gap-4 mb-5">
-                            <div className="bg-white rounded-xl p-4 shadow-md border border-purple-100">
+                            <div className="bg-white rounded-xl p-4 shadow-md border border-blue-100">
                               <div className="text-xs sm:text-sm text-slate-600 mb-2 font-medium">AI Trust Likelihood</div>
                               <div className="flex items-end gap-2">
-                                <span className="text-3xl sm:text-4xl font-bold text-purple-600">{result.aiTrustAnalysis.trustLikelihood}</span>
+                                <span className="text-3xl sm:text-4xl font-bold text-cyan-700">{result.aiTrustAnalysis.trustLikelihood}</span>
                                 <span className="text-lg text-slate-500 mb-1">/100</span>
                               </div>
                               <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                                 <div 
-                                  className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all"
+                                  className="bg-gradient-to-r from-blue-500 to-cyan-600 h-2 rounded-full transition-all"
                                   style={{ width: `${result.aiTrustAnalysis.trustLikelihood}%` }}
                                 ></div>
                               </div>
                             </div>
 
-                            <div className="bg-white rounded-xl p-4 shadow-md border border-purple-100">
+                            <div className="bg-white rounded-xl p-4 shadow-md border border-blue-100">
                               <div className="text-xs sm:text-sm text-slate-600 mb-2 font-medium">Risk Level</div>
                               <div className={`text-2xl sm:text-3xl font-bold ${result.aiTrustAnalysis.riskColor}`}>
                                 {result.aiTrustAnalysis.riskLevel}
@@ -1592,15 +1841,15 @@ Format as JSON:
                           {result.aiTrustAnalysis.aiInsights && result.aiTrustAnalysis.aiInsights.length > 0 && (
                             <div className="mb-5">
                               <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                                 AI-Powered Insights
                               </h4>
                               <div className="space-y-2">
                                 {result.aiTrustAnalysis.aiInsights.map((insight, index) => (
-                                  <div key={index} className="flex items-start gap-2 p-3 bg-white rounded-lg border border-purple-100">
-                                    <svg className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <div key={index} className="flex items-start gap-2 p-3 bg-white rounded-lg border border-blue-100">
+                                    <svg className="w-4 h-4 text-cyan-700 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                     </svg>
                                     <span className="text-xs sm:text-sm text-slate-700">{insight}</span>
@@ -1614,14 +1863,14 @@ Format as JSON:
                           {result.aiTrustAnalysis.domainCharacteristics && result.aiTrustAnalysis.domainCharacteristics.length > 0 && (
                             <div className="mb-5">
                               <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                <svg className="w-5 h-5 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                 </svg>
                                 Domain Characteristics
                               </h4>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {result.aiTrustAnalysis.domainCharacteristics.map((char, index) => (
-                                  <div key={index} className="bg-white rounded-lg p-3 border border-purple-100">
+                                  <div key={index} className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="text-xs text-slate-600 mb-1">{char.label}</div>
                                     <div className={`text-sm font-semibold px-2 py-1 rounded inline-block ${char.statusColor}`}>
                                       {char.status}
@@ -1633,14 +1882,14 @@ Format as JSON:
                           )}
 
                           {/* AI Recommendation */}
-                          <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-4 text-white">
+                          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white">
                             <div className="flex items-start gap-3">
                               <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               <div>
                                 <h4 className="font-bold text-sm sm:text-base mb-1">AI Recommendation</h4>
-                                <p className="text-xs sm:text-sm text-purple-50">{result.aiTrustAnalysis.recommendation}</p>
+                                <p className="text-xs sm:text-sm text-cyan-50">{result.aiTrustAnalysis.recommendation}</p>
                               </div>
                             </div>
                           </div>
@@ -1649,88 +1898,81 @@ Format as JSON:
                     )}
 
                     {/* Technical Details - Professional & Sleek - 3 Per Row */}
-                    <div className="mb-8">
+                    <div className="mb-6 sm:mb-8">
                       {/* Section Header with Gradient Line */}
-                      <div className="relative mb-6">
-                        <div className="flex items-center gap-4">
+                      <div className="relative mb-4 sm:mb-6">
+                        <div className="flex items-center gap-3 sm:gap-4">
                           <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur-lg opacity-40"></div>
-                            <div className="relative w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl blur-lg opacity-40"></div>
+                            <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                               </svg>
                             </div>
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                            <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                               {t.technicalDetails}
                             </h3>
-                            <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mt-2"></div>
+                            <div className="h-1 w-16 sm:w-24 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full mt-1 sm:mt-2"></div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Professional Data Grid - 3 Items Per Row */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Domain Name */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
+                      {/* Professional Data Grid - Organized by Sections */}
+                      <div className="space-y-6 sm:space-y-8">
+                        {/* Domain Information Section */}
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 100-18 9 9 0 000 18z" />
+                            </svg>
+                            Domain Information
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                            {/* Domain Name */}
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 100-18 9 9 0 000 18z" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.domainName}</p>
-                              <p className="text-sm font-bold text-slate-900 break-all leading-tight">{result.domainName}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.domainName}</p>
+                              <p className="text-xs sm:text-sm font-bold text-slate-900 break-all leading-tight">{result.domainName}</p>
                             </div>
                           </div>
                         </div>
 
                         {/* Protocol */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.protocol}</p>
-                              <p className="text-sm font-bold text-slate-900 leading-tight">{result.protocol}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* SSL Status */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-teal-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                              </svg>
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.sslStatus}</p>
-                              <p className="text-sm font-bold text-slate-900 leading-tight">{result.sslStatus}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.protocol}</p>
+                              <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{result.protocol}</p>
                             </div>
                           </div>
                         </div>
 
                         {/* Domain Age */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.domainAge}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.domainAge}</p>
                               {result.domainAge && result.domainAge !== "Information not available" ? (
                                 <p className="text-sm font-bold text-slate-900 leading-tight">{result.domainAge}</p>
                               ) : (
@@ -1744,67 +1986,162 @@ Format as JSON:
                             </div>
                           </div>
                         </div>
+                          </div>
+                        </div>
+
+                        {/* Registration Information Section */}
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Registration Information
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                            {/* SSL Status */}
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-teal-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-teal-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.sslStatus}</p>
+                              <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{result.sslStatus}</p>
+                            </div>
+                          </div>
+                        </div>
 
                         {/* Registration Date */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 to-amber-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.registrationDate}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.registrationDate}</p>
                               {result.registrationDate && result.registrationDate !== "Information not available" ? (
-                                <p className="text-sm font-bold text-slate-900 leading-tight">{result.registrationDate}</p>
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{result.registrationDate}</p>
                               ) : (
-                                <div className="flex items-center gap-2">
-                                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
-                                  <span className="text-xs font-semibold text-red-500">Unable to fetch</span>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-red-500">Unable to fetch</span>
                                 </div>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Last Checked */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-500 to-gray-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-500/10 to-gray-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        {/* Registrar */}
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500/10 to-violet-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.lastChecked}</p>
-                              <p className="text-sm font-bold text-slate-900 leading-tight">{result.lastChecked}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">Registrar</p>
+                              {result.registrar && result.registrar !== "Analysis Complete" ? (
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{result.registrar}</p>
+                              ) : (
+                                <p className="text-xs sm:text-sm font-bold text-slate-500 leading-tight">Information not available</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Nameservers */}
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">Nameservers</p>
+                              {result.nameservers && result.nameservers.length > 0 ? (
+                                <div className="space-y-0.5 sm:space-y-1">
+                                  {result.nameservers.slice(0, 3).map((ns, idx) => (
+                                    <p key={idx} className="text-[10px] sm:text-xs font-medium text-slate-700 break-all leading-tight">{ns}</p>
+                                  ))}
+                                  {result.nameservers.length > 3 && (
+                                    <p className="text-[10px] sm:text-xs text-slate-500">+{result.nameservers.length - 3} more</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-xs sm:text-sm font-bold text-slate-500 leading-tight">Information not available</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                          </div>
+                        </div>
+
+                        {/* Contact Information Section */}
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wide mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Contact Information
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+
+                        {/* Registrant Contact */}
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-teal-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-teal-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">Registrant Contact</p>
+                              {result.registrantContact ? (
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 break-all leading-tight">{result.registrantContact}</p>
+                              ) : (
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-amber-600">Privacy Protected</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         {/* Contact Email */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-rose-500/10 to-pink-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.contactEmail}</p>
-                              {result.contactEmail ? (
-                                <p className="text-sm font-bold text-slate-900 break-all leading-tight">{result.contactEmail}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.contactEmail}</p>
+              {result.contactEmail ? (
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 break-all leading-tight">{result.contactEmail}</p>
                               ) : (
-                                <div className="flex items-center gap-2">
-                                  <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                   </svg>
-                                  <span className="text-xs font-semibold text-amber-600">{t.privacyProtected}</span>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-amber-600">{t.privacyProtected}</span>
                                 </div>
                               )}
                             </div>
@@ -1812,27 +2149,29 @@ Format as JSON:
                         </div>
 
                         {/* Contact Phone */}
-                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-5 hover:shadow-xl transition-all overflow-hidden">
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="group relative bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:shadow-xl transition-all overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t.contactPhone}</p>
+                              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-1.5">{t.contactPhone}</p>
                               {result.contactPhone ? (
-                                <p className="text-sm font-bold text-slate-900 leading-tight">{result.contactPhone}</p>
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{result.contactPhone}</p>
                               ) : (
-                                <div className="flex items-center gap-2">
-                                  <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                   </svg>
-                                  <span className="text-xs font-semibold text-amber-600">{t.privacyProtected}</span>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-amber-600">{t.privacyProtected}</span>
                                 </div>
                               )}
                             </div>
+                          </div>
+                        </div>
                           </div>
                         </div>
                       </div>
@@ -1954,8 +2293,8 @@ Format as JSON:
                         ) : (
                           <li className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-yellow-50 rounded-lg">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
                             <span className="text-sm sm:text-base text-slate-500 flex-1 italic">Generating safety recommendations...</span>
                           </li>
                         )}
@@ -1985,9 +2324,9 @@ Format as JSON:
                     {result.userReports ? (
                       <div>
                         <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
                             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
                           </div>
                           <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.userReports}</h3>
@@ -2010,7 +2349,7 @@ Format as JSON:
                         </div>
 
                         {/* Trust Rating */}
-                        <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 mb-4 sm:mb-6">
+                        <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 mb-4 sm:mb-6">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs sm:text-sm font-semibold text-slate-700">{t.trustRating}</span>
                             <span className="text-base sm:text-lg font-bold text-blue-700">
@@ -2030,7 +2369,7 @@ Format as JSON:
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
                               >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                               </svg>
                             ))}
                             <span className="ml-2 text-xs sm:text-sm text-slate-600">
@@ -2090,6 +2429,161 @@ Format as JSON:
           </div>
         </div>
       </section>
+
+      {/* Report Modal - Small & Centered */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowReportModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header - Minimal */}
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Report Issue</h3>
+                    <p className="text-xs text-white/80">Help keep web safe</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  title="Close modal"
+                  className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content - Minimal */}
+            <form onSubmit={handleReportSubmit} className="p-4">
+              {/* Domain Display - Minimal */}
+              <div className="mb-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                <p className="text-xs text-slate-500 mb-0.5">Reporting</p>
+                <p className="text-sm font-semibold text-slate-900 truncate">{result?.domainName}</p>
+              </div>
+
+              {/* Report Type Options - 3-column Grid */}
+              <div className="mb-3">
+                <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                  Select Issue Type
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: 'phishing', label: 'Phishing', icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    ) },
+                    { value: 'malware', label: 'Malware', icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    ) },
+                    { value: 'spam', label: 'Spam', icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                    ) },
+                    { value: 'inappropriate', label: 'Inappropriate', icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                    ) },
+                    { value: 'copyright', label: 'Copyright', icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                    ) },
+                    { value: 'other', label: 'Other', icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    ) }
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className={`relative flex flex-col items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-all border-2 ${
+                        reportType === option.value
+                          ? 'border-cyan-600 bg-cyan-50 shadow-md'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="reportType"
+                        value={option.value}
+                        checked={reportType === option.value}
+                        onChange={(e) => setReportType(e.target.value)}
+                        className="sr-only"
+                      />
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                        reportType === option.value 
+                          ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white' 
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {option.icon}
+                      </div>
+                      <span className={`text-xs font-medium transition-colors ${reportType === option.value ? 'text-cyan-900' : 'text-slate-700'}`}>
+                        {option.label}
+                      </span>
+                      {reportType === option.value && (
+                        <div className="absolute top-1 right-1 w-4 h-4 bg-gradient-to-br from-red-500 to-rose-600 rounded-full flex items-center justify-center">
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Details - Minimal */}
+              <div className="mb-3">
+                <label className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  Additional Details
+                  <span className="text-xs font-normal text-slate-400">(Optional)</span>
+                </label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Describe the issue..."
+                  rows={2}
+                  maxLength={500}
+                  className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-rose-100 focus:outline-none text-xs resize-none transition-all"
+                />
+                <p className="text-xs text-slate-400 mt-1">Helps us investigate faster</p>
+              </div>
+
+              {/* Action Buttons - Minimal */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reportSubmitting || !reportType}
+                  className={`flex-1 px-3 py-2 rounded-lg font-semibold text-xs transition-all active:scale-95 ${
+                    reportSubmitting || !reportType
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-lg hover:shadow-xl'
+                  }`}
+                >
+                  {reportSubmitting ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </span>
+                  ) : (
+                    'Submit Report'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
