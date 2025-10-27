@@ -51,7 +51,7 @@ const Hero = () => (
         </button>
       </div>
       
-      <div className="flex items-center justify-center gap-8 text-sm text-slate-600">
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-slate-600">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -203,7 +203,7 @@ const PrivacyBox = () => (
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {[
               {
                 title: "No Data Storage",
@@ -242,15 +242,15 @@ const PrivacyBox = () => (
                 )
               }
             ].map((item, i) => (
-              <div key={i} className="flex items-start gap-4 p-5 bg-gradient-to-br from-slate-50 to-purple-50/50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
-                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+              <div key={i} className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-gradient-to-br from-slate-50 to-purple-50/50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-300">
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
                   <div className="text-purple-600">
                     {item.icon}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">{item.title}</h4>
-                  <p className="text-sm text-slate-600">{item.desc}</p>
+                  <h4 className="font-bold text-slate-900 mb-1 text-sm sm:text-base">{item.title}</h4>
+                  <p className="text-xs sm:text-sm text-slate-600">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -342,11 +342,13 @@ export default function Home() {
   const [loadingResumes, setLoadingResumes] = useState(false);
 
   useEffect(() => {
-    if (!auth.isAuthenticated) navigate("/hirelens/auth?next=/hirelens");
-  }, [auth.isAuthenticated]);
-
-  useEffect(() => {
     const loadResumes = async () => {
+      // Only load resumes if authenticated
+      if (!auth.isAuthenticated) {
+        setResumes([]);
+        return;
+      }
+
       setLoadingResumes(true);
       try {
         const resumes = (await kv.list("resume:*", true)) as KVItem[];
@@ -363,7 +365,7 @@ export default function Home() {
     };
 
     loadResumes();
-  }, []);
+  }, [auth.isAuthenticated]);
 
   return (
     // Apply bg-white to the root element to cover the navbar area too

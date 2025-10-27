@@ -19,6 +19,12 @@ const Upload = () => {
     }
 
     const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
+        // Check if user is authenticated before proceeding
+        if (!auth.isAuthenticated) {
+            navigate(`/hirelens/auth?next=/hirelens/upload`);
+            return;
+        }
+
         setIsProcessing(true);
 
         setStatusText('Uploading the file...');
@@ -205,14 +211,24 @@ const Upload = () => {
                                 <span>Analyze Resume with AI</span>
                             </button>
 
-                            {/* Info Box */}
-                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
-                                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                </svg>
-                                <p className="text-sm text-blue-800">
-                                    <span className="font-semibold">Pro tip:</span> Adding job details helps our AI provide more targeted feedback specific to the role you're applying for!
-                                </p>
+                            {/* Privacy & Tips */}
+                            <div className="mt-6 space-y-3">
+                                {/* Privacy Notice */}
+                                <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded-xl flex items-start gap-3">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-purple-900 mb-1">Secure & Private Analysis</p>
+                                        <p className="text-xs text-purple-700 leading-relaxed">You'll be asked to sign in with Puter when analyzing—your data stays encrypted and under your control.</p>
+                                    </div>
+                                </div>
+
+                                
                             </div>
                         </form>
                     </div>
