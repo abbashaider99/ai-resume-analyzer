@@ -88,7 +88,7 @@ const Upload = () => {
         <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
             <Navbar />
 
-            <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
                         <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
