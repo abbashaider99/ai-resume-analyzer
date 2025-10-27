@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import abbaslogicLogo from "../assets/abbaslogic-logo.png";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,12 +16,11 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-105 transition-transform duration-300">
-              AL
-            </div>
-            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent">
-              Abbas Logic
-            </span>
+            <img 
+              src={abbaslogicLogo} 
+              alt="Abbas Logic Logo" 
+              className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
+            />
           </Link>
 
           {/* Desktop Menu */}

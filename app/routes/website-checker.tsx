@@ -27,6 +27,8 @@ interface WebsiteAnalysis {
   contactEmail?: string | null;
   contactPhone?: string | null;
   registrantContact?: string | null;
+  registrantCountry?: string | null;
+  registrantState?: string | null;
   nameservers?: string[];
   phishingDetection?: {
     isPhishing: boolean;
@@ -104,7 +106,12 @@ export default function WebsiteChecker() {
   // Fetch live pricing when domain appears unregistered
   useEffect(() => {
     const isUnregistered =
-      result && result.registrationDate === "Information not available" && result.domainAge === "Information not available";
+      result && 
+      result.registrationDate === "Information not available" && 
+      result.domainAge === "Information not available" &&
+      result.protocol === "HTTP (Unsecured)" &&
+      !result.sslStatus?.includes("Valid");
+      
     if (!isUnregistered || !result?.domainName) {
       setPricingOffers(null);
       setPricingLoading(false);
@@ -329,10 +336,9 @@ export default function WebsiteChecker() {
     domainLength: number,
     phishingConfidence?: number,
     domainName?: string,
-    registrar?: string | null
+    registrar?: string | null,
+    organization?: string | null
   ): number => {
-    let score = 35; // Lower base score - more conservative approach like ScamAdviser
-
     console.log('=== Trust Score Calculation Debug ===');
     console.log('Input Parameters:');
     console.log('- Domain Age:', domainAge, 'years');
@@ -342,43 +348,92 @@ export default function WebsiteChecker() {
     console.log('- Phishing Confidence:', phishingConfidence);
     console.log('- Domain Name:', domainName);
     console.log('- Registrar:', registrar);
+    console.log('- Organization:', organization);
+
+    // SPECIAL HANDLING: .edu and .gov domains (including country-specific .gov variants)
+    if (domainName) {
+      const lowerDomain = domainName.toLowerCase();
+      
+      // Check for .edu domains (primarily US and international)
+      const isEduDomain = lowerDomain.endsWith('.edu') || 
+                         lowerDomain.match(/\.edu\.[a-z]{2,3}$/i); // Matches .edu.in, .edu.pk, .edu.au, etc.
+      
+      // Check for .gov domains (US and country-specific like .gov.in, .gov.pk, .gov.uk, etc.)
+      const isGovDomain = lowerDomain.endsWith('.gov') || 
+                         lowerDomain.match(/\.gov\.[a-z]{2,3}$/i) || // Matches .gov.in, .gov.pk, .gov.uk, etc.
+                         lowerDomain.match(/\.gob\.[a-z]{2}$/i) ||   // Matches .gob.mx (Mexico), .gob.pe (Peru), etc.
+                         lowerDomain.match(/\.gouv\.[a-z]{2}$/i);    // Matches .gouv.fr (France), etc.
+      
+      // Check for country-name based government domains (e.g., canada.ca, australia.gov.au, etc.)
+      const countryGovPatterns = [
+        /^(www\.)?canada\.ca$/i,           // Canada
+        /^(www\.)?australia\.gov\.au$/i,   // Australia  
+        /^(www\.)?govt\.nz$/i,             // New Zealand
+        /^(www\.)?india\.gov\.in$/i,       // India
+        /^(www\.)?usa\.gov$/i,             // USA
+        /^(www\.)?gov\.uk$/i,              // UK
+        /^(www\.)?government\.[a-z]{2,3}$/i, // Generic government.XX
+        /^(www\.)?gc\.ca$/i,               // Government of Canada (GC)
+        /^(www\.)?service\.gov\.uk$/i,     // UK Government Services
+      ];
+      
+      const isCountryGovDomain = countryGovPatterns.some(pattern => pattern.test(lowerDomain));
+      
+      if (isEduDomain || isGovDomain || isCountryGovDomain) {
+        const domainType = isEduDomain ? 'educational' : 'government';
+        const domainIcon = isEduDomain ? '🎓' : '🏛️';
+        console.log(`\n${domainIcon} SPECIAL: ${domainType} domain detected - applying trusted institution scoring`);
+        
+        // Both government and educational domains get perfect score of 100
+        const eduGovScore = 100;
+        console.log(`  Perfect Score for ${domainType}: ${eduGovScore}`);
+        
+        console.log(`\nFinal ${domainType} Score: ${eduGovScore}`);
+        console.log(`Reasoning: ${domainType} domains are restricted to verified ${isEduDomain ? 'educational institutions' : 'government entities'}`);
+        console.log('=====================================\n');
+        return eduGovScore;
+      }
+    }
+
+    let score = 50; // Balanced base score - neutral starting point
+    console.log('\nStarting Base Score: 50');
+    console.log('- Registrar:', registrar);
     console.log('Starting Score:', score);
 
-    // Domain age scoring (max 35 points) - STRICTER penalties for new domains
+    // Domain age scoring (max 30 points) - Balanced approach
     if (domainAge !== null && domainAge >= 0) {
       let ageScore = 0;
       if (domainAge >= 10) {
-        ageScore = 35; // Very established domain
+        ageScore = 30; // Very established domain
       } else if (domainAge >= 5) {
-        ageScore = 28; // Well-established domain
+        ageScore = 25; // Well-established domain
       } else if (domainAge >= 3) {
-        ageScore = 20; // Moderately established
+        ageScore = 18; // Moderately established
       } else if (domainAge >= 2) {
-        ageScore = 12; // Somewhat established
+        ageScore = 10; // Somewhat established
       } else if (domainAge >= 1) {
-        ageScore = 5; // New but not brand new
+        ageScore = 3; // New but not brand new
       } else if (domainAge >= 0.5) {
-        ageScore = -5; // 6+ months old - still suspicious
+        ageScore = -3; // 6+ months old - slightly cautious
       } else if (domainAge >= 0.25) {
-        ageScore = -15; // 3-6 months - very suspicious
+        ageScore = -10; // 3-6 months - suspicious
       } else {
-        ageScore = -25; // Less than 3 months - highly suspicious (like flipshop24)
+        ageScore = -20; // Less than 3 months - highly suspicious
       }
       score += ageScore;
       console.log(`Domain Age Score: ${ageScore >= 0 ? '+' : ''}${ageScore} (Age: ${domainAge.toFixed(2)} years, Total: ${score})`);
     } else {
-      // If we can't determine age, assume it's new and penalize
-      score -= 10;
-      console.log('Domain Age Score: -10 (Unable to determine, assuming new, Total:', score + ')');
+      // If we can't determine age, no penalty (neutral)
+      console.log('Domain Age Score: 0 (Unable to determine, neutral stance, Total:', score + ')');
     }
 
-    // SSL scoring (max 15 points) - Less weight, it's basic nowadays
+    // SSL scoring (max 10 points) - Basic security requirement
     if (hasSSL) {
-      score += 15;
-      console.log(`SSL Score: +15 (Total: ${score})`);
+      score += 10;
+      console.log(`SSL Score: +10 (Total: ${score})`);
     } else {
-      score -= 25;
-      console.log(`SSL Score: -25 (No SSL - Major red flag, Total: ${score})`);
+      score -= 20;
+      console.log(`SSL Score: -20 (No SSL - Security concern, Total: ${score})`);
     }
 
     // Phishing detection penalty (up to -50 points) - Severe penalty
@@ -406,44 +461,37 @@ export default function WebsiteChecker() {
       console.log(`Scam Keywords Penalty: ${keywordPenalty} (Found: ${scamKeywords.join(', ')}, Total: ${score})`);
     }
 
-    // Domain length scoring - STRICTER penalties
+    // Domain length scoring - Balanced approach
     let lengthScore = 0;
     if (domainLength < 6) {
-      lengthScore = 8; // Very short, premium domain
-    } else if (domainLength < 12) {
-      lengthScore = 5; // Good length
-    } else if (domainLength < 18) {
-      lengthScore = 0; // Acceptable length
+      lengthScore = 5; // Very short, premium domain
+    } else if (domainLength < 15) {
+      lengthScore = 3; // Good length
     } else if (domainLength < 25) {
-      lengthScore = -5; // Getting long
+      lengthScore = 0; // Acceptable length
     } else if (domainLength < 35) {
-      lengthScore = -12; // Very long, suspicious
+      lengthScore = -5; // Getting long, slightly suspicious
     } else {
-      lengthScore = -25; // Extremely long, highly suspicious
+      lengthScore = -15; // Extremely long, suspicious
     }
     score += lengthScore;
     console.log(`Domain Length Score: ${lengthScore >= 0 ? '+' : ''}${lengthScore} (Length: ${domainLength}, Total: ${score})`);
 
-    // Domain naming pattern analysis - MUCH STRICTER
+    // Domain naming pattern analysis - Balanced detection of truly suspicious patterns
     if (domainName) {
       const lowerDomain = domainName.toLowerCase();
       let namingScore = 0;
       
-      // Check for suspicious patterns - MORE PENALTIES
+      // Check for suspicious patterns - Focus on clearly malicious patterns
       const suspiciousPatterns = [
-        { pattern: /\d{3,}/, penalty: -15, reason: 'Contains number sequences (e.g., 24)' }, // Catches "24" in flipshop24
-        { pattern: /\d{2}/, penalty: -8, reason: 'Contains 2-digit numbers' }, // Additional penalty for 2 digits
-        { pattern: /\d/, penalty: -5, reason: 'Contains numbers in domain' }, // ANY number is suspicious
-        { pattern: /-{2,}/, penalty: -12, reason: 'Multiple consecutive hyphens' },
-        { pattern: /--/, penalty: -8, reason: 'Double hyphens' },
-        { pattern: /^[0-9]/, penalty: -10, reason: 'Starts with number' },
-        { pattern: /(free|win|prize|claim|bonus|gift|lucky|deal|offer|discount|cheap|sale)/i, penalty: -15, reason: 'Promotional keywords' },
-        { pattern: /(shop|store|market|buy|sell)/i, penalty: -8, reason: 'Generic shop keywords' }, // flipshop = suspicious
-        { pattern: /(login|signin|account|secure|verify|auth|update|reset)/i, penalty: -20, reason: 'Phishing keywords' },
-        { pattern: /(official|real|legit|genuine|authentic|trusted|verified)/i, penalty: -15, reason: 'Over-assertive legitimacy claims' },
-        { pattern: /[0o1il]{3,}/i, penalty: -12, reason: 'Character substitution pattern' },
-        { pattern: /(.)\1{3,}/, penalty: -10, reason: 'Repeated characters' },
-        { pattern: /(24|247|365|fast|instant|quick|best|top|super)/i, penalty: -8, reason: 'Urgency/superlative keywords' }, // "24" in flipshop24
+        { pattern: /\d{4,}/, penalty: -12, reason: 'Contains long number sequences' }, // 4+ digits
+        { pattern: /-{2,}/, penalty: -10, reason: 'Multiple consecutive hyphens' },
+        { pattern: /^[0-9]/, penalty: -8, reason: 'Starts with number' },
+        { pattern: /(free|win|prize|claim|bonus|gift|lucky)/i, penalty: -12, reason: 'Promotional scam keywords' },
+        { pattern: /(login|signin|secure-|verify-|auth-|update-|reset-)/i, penalty: -15, reason: 'Phishing keywords' },
+        { pattern: /(official|real-|legit|genuine|authentic-|trusted-|verified-)/i, penalty: -10, reason: 'Over-assertive legitimacy claims' },
+        { pattern: /[0o1il]{4,}/i, penalty: -10, reason: 'Character substitution pattern' },
+        { pattern: /(.)\1{4,}/, penalty: -8, reason: 'Many repeated characters' },
       ];
 
       suspiciousPatterns.forEach(({ pattern, penalty, reason }) => {
@@ -453,13 +501,11 @@ export default function WebsiteChecker() {
         }
       });
 
-      // REMOVED positive patterns - domains need to EARN trust, not get bonuses
-
-      // Check for excessive special characters
-      const specialCharCount = (lowerDomain.match(/[^a-z0-9.]/g) || []).length;
-      if (specialCharCount > 2) {
-        namingScore -= (specialCharCount - 2) * 5;
-        console.log(`  - Special Characters: -${(specialCharCount - 2) * 5} (${specialCharCount} special chars)`);
+      // Check for excessive special characters (more than 3 hyphens)
+      const hyphenCount = (lowerDomain.match(/-/g) || []).length;
+      if (hyphenCount > 3) {
+        namingScore -= (hyphenCount - 3) * 3;
+        console.log(`  - Excessive Hyphens: -${(hyphenCount - 3) * 3} (${hyphenCount} hyphens)`);
       }
 
       score += namingScore;
@@ -468,12 +514,12 @@ export default function WebsiteChecker() {
       }
     }
 
-    // TLD analysis - STRICTER
+    // TLD analysis - Balanced approach
     if (domainName) {
       const lowerDomain = domainName.toLowerCase();
-      const trustedTLDs = ['.edu', '.gov', '.org']; // Only highly trusted
-      const goodTLDs = ['.com', '.net', '.co.uk', '.us', '.ca', '.de', '.fr', '.au', '.uk', '.nl']; // Common but not fully trusted
-      const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.club', '.info', '.work', '.click', '.link', '.pw', '.cc', '.ws', '.biz'];
+      const trustedTLDs = ['.edu', '.gov', '.org', '.ac.uk', '.edu.in', '.gov.in']; // Highly trusted
+      const goodTLDs = ['.com', '.net', '.co', '.io', '.co.uk', '.us', '.ca', '.de', '.fr', '.au', '.uk', '.nl', '.in', '.jp', '.br']; // Common and reputable
+      const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.work', '.click', '.link', '.pw', '.cc', '.ws'];
       
       let tldScore = 0;
       const hasHighlyTrustedTLD = trustedTLDs.some(tld => lowerDomain.endsWith(tld));
@@ -481,72 +527,110 @@ export default function WebsiteChecker() {
       const hasSuspiciousTLD = suspiciousTLDs.some(tld => lowerDomain.endsWith(tld));
       
       if (hasHighlyTrustedTLD) {
-        tldScore = 15;
-        console.log(`TLD Score: +15 (Highly trusted TLD, Total: ${score + tldScore})`);
+        tldScore = 10;
+        console.log(`TLD Score: +10 (Highly trusted TLD, Total: ${score + tldScore})`);
       } else if (hasGoodTLD) {
         tldScore = 5;
-        console.log(`TLD Score: +5 (Common TLD, Total: ${score + tldScore})`);
+        console.log(`TLD Score: +5 (Common reputable TLD, Total: ${score + tldScore})`);
       } else if (hasSuspiciousTLD) {
-        tldScore = -25;
-        console.log(`TLD Score: -25 (Suspicious TLD, Total: ${score + tldScore})`);
+        tldScore = -20;
+        console.log(`TLD Score: -20 (Suspicious TLD, Total: ${score + tldScore})`);
       } else {
-        // Unknown TLD - penalty for obscure TLDs
-        tldScore = -10;
-        console.log(`TLD Score: -10 (Unknown/Uncommon TLD, Total: ${score + tldScore})`);
+        // Unknown TLD - neutral to slightly cautious
+        tldScore = -3;
+        console.log(`TLD Score: -3 (Unknown/Uncommon TLD, Total: ${score + tldScore})`);
       }
       score += tldScore;
     }
 
-    // Registrar reputation scoring - MORE STRICT
+    // Registrar reputation scoring - Balanced approach
     if (registrar && registrar !== "Analysis Complete") {
       const lowerRegistrar = registrar.toLowerCase();
       let registrarScore = 0;
 
-      // Trusted major registrars (only the best)
+      // Trusted major registrars
       const trustedRegistrars = [
         'google domains', 'cloudflare', 'amazon registrar', 'microsoft',
-        'godaddy', 'namecheap', 'gandi', 'enom', 'network solutions'
-      ];
-
-      // Moderate registrars (less bonus)
-      const moderateRegistrars = [
+        'godaddy', 'namecheap', 'gandi', 'enom', 'network solutions',
         'name.com', 'hover', '1&1', 'tucows', 'bluehost',
         'hostgator', 'domain.com', 'register.com', 'inwx', 'dynadot',
-        'ionos', 'ovh', 'key-systems'
+        'ionos', 'ovh', 'key-systems', 'publicdomainregistry', 'pdr',
+        'net4india', 'bigrock', 'endurance', 'newfold'
       ];
 
       // Registrars often associated with abuse
       const suspiciousRegistrars = [
-        'freenom', 'dot.tk', 'namecheap basic', 'pdr', 'wildwestdomains',
-        'registrar of domain names', 'bizcn', 'alibaba', 'hangzhou',
-        'eranet', 'onlinenic', 'west263', 'xin net', 'hichina', 'nicenic',
-        'cheap', 'discount', 'free', 'domains by proxy' // Privacy services can hide scammers
+        'freenom', 'dot.tk', 'namecheap basic',
+        'registrar of domain names', 'eranet', 'onlinenic',
+        'cheap-domain', 'free-domain'
       ];
 
       const isTrusted = trustedRegistrars.some(trusted => lowerRegistrar.includes(trusted));
-      const isModerate = moderateRegistrars.some(moderate => lowerRegistrar.includes(moderate));
       const isSuspicious = suspiciousRegistrars.some(suspicious => lowerRegistrar.includes(suspicious));
 
       if (isTrusted) {
-        registrarScore = 10;
-        console.log(`Registrar Score: +10 (Trusted registrar: ${registrar}, Total: ${score + registrarScore})`);
-      } else if (isModerate) {
-        registrarScore = 5;
-        console.log(`Registrar Score: +5 (Moderate registrar: ${registrar}, Total: ${score + registrarScore})`);
+        registrarScore = 8;
+        console.log(`Registrar Score: +8 (Known registrar: ${registrar}, Total: ${score + registrarScore})`);
       } else if (isSuspicious) {
-        registrarScore = -25;
-        console.log(`Registrar Score: -25 (High-risk registrar: ${registrar}, Total: ${score + registrarScore})`);
+        registrarScore = -15;
+        console.log(`Registrar Score: -15 (High-risk registrar: ${registrar}, Total: ${score + registrarScore})`);
       } else if (lowerRegistrar.length > 5) {
-        // Unknown registrar - be cautious
-        registrarScore = -5;
-        console.log(`Registrar Score: -5 (Unknown registrar: ${registrar}, Total: ${score + registrarScore})`);
+        // Unknown registrar - neutral
+        registrarScore = 0;
+        console.log(`Registrar Score: 0 (Unknown registrar: ${registrar}, Total: ${score + registrarScore})`);
       }
 
       score += registrarScore;
     } else if (registrar === null || registrar === "Analysis Complete") {
-      // Missing registrar information - penalty (hiding info is suspicious)
-      score -= 10;
-      console.log(`Registrar Score: -10 (No registrar information, Total: ${score})`);
+      // Missing registrar information - small penalty
+      score -= 5;
+      console.log(`Registrar Score: -5 (No registrar information, Total: ${score})`);
+    }
+
+    // Organization/registrant information scoring (up to +12 points)
+    // Having visible organization information shows transparency and legitimacy
+    if (organization && organization.trim().length > 0) {
+      // Filter out privacy protection services and generic placeholders
+      const lowerOrg = organization.toLowerCase();
+      const privacyServices = [
+        'privacy', 'protected', 'redacted', 'whois', 'guard', 'proxy',
+        'not disclosed', 'data protected', 'gdpr', 'withheld', 'contact privacy',
+        'domains by proxy', 'whoisguard', 'perfect privacy', 'private registration'
+      ];
+      
+      const isPrivacyProtected = privacyServices.some(service => lowerOrg.includes(service));
+      
+      if (!isPrivacyProtected) {
+        // Real organization name found - positive trust signal
+        let orgScore = 0;
+        
+        if (organization.length > 50) {
+          // Very detailed organization info
+          orgScore = 12;
+          console.log(`Organization Score: +12 (Detailed organization information: ${organization}, Total: ${score + orgScore})`);
+        } else if (organization.length > 20) {
+          // Good organization info
+          orgScore = 10;
+          console.log(`Organization Score: +10 (Organization information: ${organization}, Total: ${score + orgScore})`);
+        } else if (organization.length > 5) {
+          // Basic organization info
+          orgScore = 7;
+          console.log(`Organization Score: +7 (Basic organization name: ${organization}, Total: ${score + orgScore})`);
+        } else {
+          // Minimal but present
+          orgScore = 4;
+          console.log(`Organization Score: +4 (Minimal organization info, Total: ${score + orgScore})`);
+        }
+        
+        score += orgScore;
+      } else {
+        // Privacy-protected organization - neutral (not necessarily bad)
+        console.log(`Organization Score: 0 (Privacy-protected organization info, neutral, Total: ${score})`);
+      }
+    } else {
+      // No organization information - small penalty
+      score -= 3;
+      console.log(`Organization Score: -3 (No organization information, Total: ${score})`);
     }
 
     const finalScore = Math.max(0, Math.min(100, score));
@@ -902,14 +986,39 @@ Format your response as JSON:
     domainAge?: string
   ) => {
     try {
+      // Check for special trusted domains first
+      const lowerDomain = domain.toLowerCase();
+      const isEduDomain = lowerDomain.endsWith('.edu');
+      const isGovDomain = lowerDomain.endsWith('.gov') || 
+                         lowerDomain.match(/\.gov\.[a-z]{2,3}$/i) || // .gov.in, .gov.pk, .gov.uk, etc.
+                         lowerDomain.match(/\.gob\.[a-z]{2}$/i) ||   // .gob.mx, .gob.pe, etc.
+                         lowerDomain.match(/\.gouv\.[a-z]{2}$/i);    // .gouv.fr, etc.
+      
+      // Check for country-name based government domains
+      const countryGovDomains = ['canada.ca', 'gc.ca', 'australia.gov.au', 'govt.nz', 'india.gov.in', 'usa.gov', 'gov.uk', 'service.gov.uk'];
+      const isCountryGovDomain = countryGovDomains.some(d => lowerDomain === d || lowerDomain === `www.${d}`);
+      
       // Check if Puter AI is available
       if (typeof window !== 'undefined' && window.puter?.ai) {
+        let specialDomainNote = '';
+        if (isEduDomain) {
+          specialDomainNote = '\n⭐ IMPORTANT: This is a .edu domain - restricted to accredited educational institutions. These domains are highly regulated and trustworthy.';
+        } else if (isGovDomain || isCountryGovDomain) {
+          if (lowerDomain.endsWith('.gov')) {
+            specialDomainNote = '\n⭐ IMPORTANT: This is a .gov domain - restricted to official US government entities. These domains are strictly controlled and verified.';
+          } else if (isCountryGovDomain) {
+            specialDomainNote = '\n⭐ IMPORTANT: This is an official country government domain - strictly controlled and verified by the government.';
+          } else {
+            specialDomainNote = '\n⭐ IMPORTANT: This is a government domain (country-specific) - restricted to official government entities. These domains are strictly controlled and verified.';
+          }
+        }
+          
         const prompt = `As a cybersecurity expert, analyze this domain for trustworthiness and phishing indicators: ${domain}
 
 Context:
 - Trust Score: ${trustScore}/100
 - SSL Status: ${sslStatus || 'Unknown'}
-- Domain Age: ${domainAge || 'Unknown'}
+- Domain Age: ${domainAge || 'Unknown'}${specialDomainNote}
 ${phishingInfo?.isPhishing ? `- ⚠️ PHISHING DETECTED (${phishingInfo.confidence}% confidence)
 - Suspicious Patterns: ${phishingInfo.patterns.join(', ')}
 - ${phishingInfo.likelyTarget ? `Likely impersonating: ${phishingInfo.likelyTarget}` : ''}` : ''}
@@ -1141,10 +1250,73 @@ Format as JSON:
     hasSSL: boolean,
     domainAge: number | null,
     scamKeywords: string[],
-    phishingInfo?: { isPhishing: boolean; confidence: number; patterns: string[]; likelyTarget?: string }
+    phishingInfo?: { isPhishing: boolean; confidence: number; patterns: string[]; likelyTarget?: string },
+    domainName?: string,
+    organization?: string | null
   ) => {
     const positiveHighlights: string[] = [];
     const negativeHighlights: string[] = [];
+
+    // Special handling for .edu and government domains
+    if (domainName) {
+      const lowerDomain = domainName.toLowerCase();
+      
+      // Check for country-name based government domains first
+      const countryGovMapping: { [key: string]: string } = {
+        'canada.ca': 'Canada',
+        'www.canada.ca': 'Canada',
+        'gc.ca': 'Canada (Government of Canada)',
+        'www.gc.ca': 'Canada (Government of Canada)',
+        'australia.gov.au': 'Australia',
+        'www.australia.gov.au': 'Australia',
+        'govt.nz': 'New Zealand',
+        'www.govt.nz': 'New Zealand',
+        'india.gov.in': 'India',
+        'www.india.gov.in': 'India',
+        'usa.gov': 'United States',
+        'www.usa.gov': 'United States',
+        'gov.uk': 'United Kingdom',
+        'www.gov.uk': 'United Kingdom',
+        'service.gov.uk': 'United Kingdom',
+        'www.service.gov.uk': 'United Kingdom',
+      };
+      
+      const countryGovName = countryGovMapping[lowerDomain];
+      if (countryGovName) {
+        positiveHighlights.push(`🏛️ This is the official government website of ${countryGovName}`);
+        positiveHighlights.push("This domain is operated by the official government and is highly trustworthy");
+        positiveHighlights.push("Government websites are strictly regulated and secure");
+      } else if (lowerDomain.endsWith('.edu')) {
+        positiveHighlights.push("🎓 This is a .edu domain - restricted to accredited educational institutions only");
+        positiveHighlights.push("Educational domains undergo strict verification before issuance");
+        positiveHighlights.push(".edu domains are highly regulated and trustworthy");
+      } else if (lowerDomain.endsWith('.gov')) {
+        positiveHighlights.push("🏛️ This is a .gov domain - restricted to official US government entities only");
+        positiveHighlights.push("Government domains are strictly controlled and verified");
+        positiveHighlights.push(".gov domains represent official government websites");
+      } else if (lowerDomain.match(/\.gov\.[a-z]{2,3}$/i)) {
+        // Country-specific government domains like .gov.in, .gov.pk, .gov.uk, etc.
+        const countryMatch = lowerDomain.match(/\.gov\.([a-z]{2,3})$/i);
+        const countryCode = countryMatch ? countryMatch[1].toUpperCase() : 'this country';
+        positiveHighlights.push(`🏛️ This is a ${countryCode} government domain (.gov.${countryMatch?.[1]}) - restricted to official government entities`);
+        positiveHighlights.push("Country-specific government domains are strictly regulated and verified");
+        positiveHighlights.push("These domains represent official government websites");
+      } else if (lowerDomain.match(/\.gob\.[a-z]{2}$/i)) {
+        // Spanish/Portuguese speaking countries use .gob (gobierno/governo)
+        const countryMatch = lowerDomain.match(/\.gob\.([a-z]{2})$/i);
+        const countryCode = countryMatch ? countryMatch[1].toUpperCase() : 'this country';
+        positiveHighlights.push(`🏛️ This is a ${countryCode} government domain (.gob.${countryMatch?.[1]}) - restricted to official government entities`);
+        positiveHighlights.push("Government domains are strictly controlled and verified");
+        positiveHighlights.push("These domains represent official government websites");
+      } else if (lowerDomain.match(/\.gouv\.[a-z]{2}$/i)) {
+        // French-speaking countries use .gouv (gouvernement)
+        const countryMatch = lowerDomain.match(/\.gouv\.([a-z]{2})$/i);
+        const countryCode = countryMatch ? countryMatch[1].toUpperCase() : 'this country';
+        positiveHighlights.push(`🏛️ This is a ${countryCode} government domain (.gouv.${countryMatch?.[1]}) - restricted to official government entities`);
+        positiveHighlights.push("Government domains are strictly controlled and verified");
+        positiveHighlights.push("These domains represent official government websites");
+      }
+    }
 
     // Positive highlights
     if (hasSSL) {
@@ -1165,6 +1337,22 @@ Format as JSON:
 
     if (!phishingInfo?.isPhishing) {
       positiveHighlights.push("Our phishing detection system did not identify this as a phishing attempt");
+    }
+
+    // Organization/registrant information highlights
+    if (organization && organization.trim().length > 0) {
+      const lowerOrg = organization.toLowerCase();
+      const privacyServices = [
+        'privacy', 'protected', 'redacted', 'whois', 'guard', 'proxy',
+        'not disclosed', 'data protected', 'gdpr', 'withheld', 'contact privacy',
+        'domains by proxy', 'whoisguard', 'perfect privacy', 'private registration'
+      ];
+      
+      const isPrivacyProtected = privacyServices.some(service => lowerOrg.includes(service));
+      
+      if (!isPrivacyProtected) {
+        positiveHighlights.push(`Organization information is publicly available, showing transparency`);
+      }
     }
 
     if (trustScore >= 80) {
@@ -1192,6 +1380,23 @@ Format as JSON:
       negativeHighlights.push(`Our AI detected this as a potential phishing site with ${phishingInfo.confidence}% confidence`);
       if (phishingInfo.likelyTarget) {
         negativeHighlights.push(`This site may be impersonating ${phishingInfo.likelyTarget}`);
+      }
+    }
+
+    // Organization/registrant information negative highlights
+    if (!organization || organization.trim().length === 0) {
+      negativeHighlights.push('No organization information is publicly available, which reduces transparency');
+    } else {
+      const lowerOrg = organization.toLowerCase();
+      const privacyServices = [
+        'privacy', 'protected', 'redacted', 'whois', 'guard', 'proxy',
+        'not disclosed', 'data protected', 'gdpr', 'withheld', 'contact privacy'
+      ];
+      
+      const isPrivacyProtected = privacyServices.some(service => lowerOrg.includes(service));
+      
+      if (isPrivacyProtected) {
+        negativeHighlights.push('Organization information is hidden behind privacy protection services');
       }
     }
 
@@ -1252,6 +1457,8 @@ Format as JSON:
         let contactPhone = null;
         let registrar = null;
         let registrantContact = null;
+        let registrantCountry = null;
+        let registrantState = null;
         let nameservers: string[] = [];
         
         if (rdapData.entities && Array.isArray(rdapData.entities)) {
@@ -1264,11 +1471,23 @@ Format as JSON:
               }
             }
             
-            // Extract registrant contact
+            // Extract registrant contact (try multiple fields)
             if (entity.roles && entity.roles.includes('registrant') && entity.vcardArray) {
               const fnField = entity.vcardArray[1]?.find((f: any) => f[0] === 'fn');
-              if (fnField && fnField[3]) {
+              const orgField = entity.vcardArray[1]?.find((f: any) => f[0] === 'org');
+              const adrField = entity.vcardArray[1]?.find((f: any) => f[0] === 'adr');
+              
+              if (orgField && orgField[3]) {
+                registrantContact = orgField[3];
+              } else if (fnField && fnField[3]) {
                 registrantContact = fnField[3];
+              }
+              
+              // Extract country and state from address field
+              if (adrField && Array.isArray(adrField[3])) {
+                // vCard adr format: [post-office-box, extended-address, street-address, locality, region, postal-code, country]
+                registrantState = adrField[3][4] || null; // region/state
+                registrantCountry = adrField[3][6] || null; // country
               }
             }
             
@@ -1295,7 +1514,30 @@ Format as JSON:
             .filter((name: any) => name);
         }
 
-        console.log('Extracted data:', { registrationDate, contactEmail, contactPhone, registrar, registrantContact, nameservers });
+        // If we have a US state but no country, assume US
+        // Only apply this logic if registrantState is actually a state field, not a country code in the state field
+        const usStates = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+                       'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
+        
+        // Common non-US country codes to avoid false matches with state codes
+        const countryCodes = ['IN', 'ID', 'MA', 'AL', 'GA', 'AR', 'CN', 'DE', 'FR', 'GB', 'IT', 'JP', 'KR', 'RU', 'BR', 'MX', 'AU', 'NZ', 'CA', 'ES', 'PT', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'HU', 'RO', 'BG', 'GR', 'TR', 'IL', 'SA', 'AE', 'EG', 'ZA', 'NG', 'KE', 'TH', 'VN', 'PH', 'MY', 'SG', 'HK', 'TW'];
+        
+        let finalCountry = registrantCountry;
+        // Only infer US if: no country AND has state AND state is not a country code AND matches US state
+        if (!finalCountry && registrantState) {
+          const stateUpper = registrantState.toUpperCase().trim();
+          const isCountryCode = countryCodes.includes(stateUpper);
+          const isUsState = usStates.some(state => state.toUpperCase() === stateUpper);
+          
+          if (!isCountryCode && isUsState) {
+            finalCountry = 'US';
+            console.log('RDAP: Inferred US country from state:', registrantState);
+          }
+        }
+
+        console.log('Extracted data:', { registrationDate, contactEmail, contactPhone, registrar, registrantContact, registrantCountry: finalCountry, registrantState, nameservers });
+        console.log('RDAP registrantContact:', registrantContact);
+        console.log('RDAP location:', { registrantCountry: finalCountry, registrantState });
 
         return {
           registrationDate,
@@ -1303,6 +1545,8 @@ Format as JSON:
           contactPhone,
           registrar,
           registrantContact,
+          registrantCountry: finalCountry,
+          registrantState,
           nameservers
         };
       }
@@ -1352,10 +1596,45 @@ Format as JSON:
                               htmlText.match(/Sponsoring Registrar:\s*([^\n<]+)/i);
         const registrar = registrarMatch ? registrarMatch[1].trim() : null;
 
-        // Parse for registrant contact
-        const registrantMatch = htmlText.match(/Registrant(?:\s+Name)?:\s*([^\n<]+)/i) ||
-                               htmlText.match(/Registrant Organization:\s*([^\n<]+)/i);
+        // Parse for registrant contact/organization - try multiple patterns
+        const registrantMatch = htmlText.match(/Registrant Organization:\s*([^\n<]+)/i) ||
+                               htmlText.match(/Registrant(?:\s+Name)?:\s*([^\n<]+)/i) ||
+                               htmlText.match(/Organization:\s*([^\n<]+)/i) ||
+                               htmlText.match(/Org(?:anization)?:\s*([^\n<]+)/i);
         const registrantContact = registrantMatch ? registrantMatch[1].trim() : null;
+
+        // Parse for country
+        const countryMatch = htmlText.match(/Registrant Country:\s*([^\n<]+)/i) ||
+                            htmlText.match(/Country:\s*([^\n<]+)/i);
+        const registrantCountry = countryMatch ? countryMatch[1].trim() : null;
+
+        // Parse for state/region
+        const stateMatch = htmlText.match(/Registrant State\/Province:\s*([^\n<]+)/i) ||
+                          htmlText.match(/State\/Province:\s*([^\n<]+)/i) ||
+                          htmlText.match(/Registrant State:\s*([^\n<]+)/i) ||
+                          htmlText.match(/State:\s*([^\n<]+)/i);
+        let registrantState = stateMatch ? stateMatch[1].trim() : null;
+
+        // If we have a US state but no country, assume US
+        // Only apply this logic if registrantState is actually a state field, not a country code in the state field
+        const usStates = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+                         'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
+        
+        // Common non-US country codes to avoid false matches with state codes
+        const countryCodes = ['IN', 'ID', 'MA', 'AL', 'GA', 'AR', 'CN', 'DE', 'FR', 'GB', 'IT', 'JP', 'KR', 'RU', 'BR', 'MX', 'AU', 'NZ', 'CA', 'ES', 'PT', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'HU', 'RO', 'BG', 'GR', 'TR', 'IL', 'SA', 'AE', 'EG', 'ZA', 'NG', 'KE', 'TH', 'VN', 'PH', 'MY', 'SG', 'HK', 'TW'];
+        
+        let finalCountry = registrantCountry;
+        // Only infer US if: no country AND has state AND state is not a country code AND matches US state
+        if (!finalCountry && registrantState) {
+          const stateUpper = registrantState.toUpperCase().trim();
+          const isCountryCode = countryCodes.includes(stateUpper);
+          const isUsState = usStates.some(state => state.toUpperCase() === stateUpper);
+          
+          if (!isCountryCode && isUsState) {
+            finalCountry = 'US';
+            console.log('Who.is: Inferred US country from state:', registrantState);
+          }
+        }
 
         // Parse for nameservers
         const nameservers: string[] = [];
@@ -1367,12 +1646,17 @@ Format as JSON:
           }
         }
 
+        console.log('Who.is registrantContact:', registrantContact);
+        console.log('Who.is location:', { registrantCountry: finalCountry, registrantState });
+
         return {
           registrationDate,
           contactEmail,
           contactPhone,
           registrar,
           registrantContact,
+          registrantCountry: finalCountry,
+          registrantState,
           nameservers
         };
       }
@@ -1400,12 +1684,42 @@ Format as JSON:
           }
         }
 
+        const registrantContact = ipwhoisData.registrant_organization || ipwhoisData.registrant || ipwhoisData.registrant_name || ipwhoisData.org || ipwhoisData.company || null;
+        let registrantCountry = ipwhoisData.registrant_country || ipwhoisData.country || ipwhoisData.country_code || ipwhoisData.country_name || null;
+        const registrantState = ipwhoisData.registrant_state || ipwhoisData.registrant_province || ipwhoisData.region || null;
+        
+        // If we have a US state but no country, assume US
+        // Only apply this logic if registrantState is actually a state field, not a country code in the state field
+        const usStates = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+                       'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
+        
+        // Common non-US country codes to avoid false matches with state codes
+        const countryCodes = ['IN', 'ID', 'MA', 'AL', 'GA', 'AR', 'CN', 'DE', 'FR', 'GB', 'IT', 'JP', 'KR', 'RU', 'BR', 'MX', 'AU', 'NZ', 'CA', 'ES', 'PT', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'HU', 'RO', 'BG', 'GR', 'TR', 'IL', 'SA', 'AE', 'EG', 'ZA', 'NG', 'KE', 'TH', 'VN', 'PH', 'MY', 'SG', 'HK', 'TW'];
+        
+        // Only infer US if: no country AND has state AND state is not a country code AND matches US state
+        if (!registrantCountry && registrantState) {
+          const stateUpper = registrantState.toUpperCase().trim();
+          const isCountryCode = countryCodes.includes(stateUpper);
+          const isUsState = usStates.some(state => state.toUpperCase() === stateUpper);
+          
+          if (!isCountryCode && isUsState) {
+            registrantCountry = 'US';
+            console.log('IPWhois: Inferred US country from state:', registrantState);
+          }
+        }
+        
+        console.log('IPWhois registrantContact:', registrantContact);
+        console.log('IPWhois location:', { registrantCountry, registrantState });
+        console.log('Available IPWhois fields:', Object.keys(ipwhoisData));
+
         return {
           registrationDate,
           contactEmail: ipwhoisData.registrar_email || ipwhoisData.abuse_email || null,
           contactPhone: ipwhoisData.registrar_phone || ipwhoisData.abuse_phone || null,
           registrar: ipwhoisData.registrar || ipwhoisData.org || ipwhoisData.asn_org || null,
-          registrantContact: ipwhoisData.registrant || ipwhoisData.registrant_name || ipwhoisData.registrant_organization || ipwhoisData.org || null,
+          registrantContact: registrantContact,
+          registrantCountry: registrantCountry,
+          registrantState: registrantState,
           nameservers: ipwhoisData.nameservers || []
         };
       }
@@ -1421,6 +1735,8 @@ Format as JSON:
       contactPhone: null,
       registrar: null,
       registrantContact: null,
+      registrantCountry: null,
+      registrantState: null,
       nameservers: []
     };
   };
@@ -1517,7 +1833,8 @@ Format as JSON:
         domain.length,
         phishingDetection.confidence,
         domain, // Pass the actual domain name for TLD analysis
-        domainDetails.registrar // Pass registrar for reputation scoring
+        domainDetails.registrar, // Pass registrar for reputation scoring
+        domainDetails.registrantContact // Pass organization for transparency scoring
       );
 
       // Get verdict
@@ -1561,7 +1878,9 @@ Format as JSON:
         sslCheck.hasSSL,
         actualDomainAge,
         scamKeywords,
-        phishingDetection.isPhishing ? phishingDetection : undefined
+        phishingDetection.isPhishing ? phishingDetection : undefined,
+        domain,
+        domainDetails.registrantContact
       );
 
       const analysis: WebsiteAnalysis = {
@@ -1581,6 +1900,8 @@ Format as JSON:
         contactEmail: domainDetails.contactEmail,
         contactPhone: domainDetails.contactPhone,
         registrantContact: domainDetails.registrantContact,
+        registrantCountry: domainDetails.registrantCountry,
+        registrantState: domainDetails.registrantState,
         nameservers: domainDetails.nameservers || [],
         phishingDetection: phishingDetection.isPhishing ? phishingDetection : undefined,
         userReports,
@@ -1901,26 +2222,29 @@ Format as JSON:
                 </div>
               ) : result ? (
                 <div ref={resultRef} className="animate-fade-in" id="print-section">
-                  {/* Check if domain is not registered */}
-                  {result.registrationDate === "Information not available" && result.domainAge === "Information not available" ? (
+                  {/* Check if domain is not registered AND website doesn't exist */}
+                  {result.registrationDate === "Information not available" && 
+                   result.domainAge === "Information not available" && 
+                   result.protocol === "HTTP (Unsecured)" &&
+                   !result.sslStatus?.includes("Valid") ? (
                     /* Domain Not Registered - Premium Design with Pricing */
-                    <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-5 border border-slate-200">
-                      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-slate-50 border-2 border-blue-200">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-5 border border-slate-200">
+                      <div className="overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-slate-50 border-2 border-blue-200">
                         {/* Header removed to avoid provider branding */}
 
-                        <div className="p-5 sm:p-6 lg:p-7">
+                        <div className="p-4 sm:p-6 lg:p-7">
                           {/* Status Badge & Icon */}
-                          <div className="text-center mb-8">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full mb-6">
+                          <div className="text-center mb-5 sm:mb-8">
+                            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-100 rounded-full mb-4 sm:mb-6">
                               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-sm font-semibold text-green-700">Available for Registration</span>
+                              <span className="text-xs sm:text-sm font-semibold text-green-700">Available for Registration</span>
                             </div>
 
-                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
+                            <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2 sm:mb-3 px-2 break-words">
                               {result.domainName}
                             </h3>
                             
-                            <p className="text-base sm:text-lg text-slate-600 max-w-md mx-auto">
+                            <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-md mx-auto px-3">
                               This domain is available! Register it now before someone else claims it.
                             </p>
                           </div>
@@ -1943,34 +2267,34 @@ Format as JSON:
                             };
 
                             return (
-                              <div className="mb-6">
+                              <div className="mb-4 sm:mb-6">
                                 <a
                                   href={offerData.url}
                                   target="_blank"
                                   rel="noopener noreferrer sponsored"
-                                  className="group block bg-white rounded-xl shadow-lg border border-cyan-300 p-6 hover:shadow-xl transition-all"
+                                  className="group block bg-white rounded-lg sm:rounded-xl shadow-lg border border-cyan-300 p-4 sm:p-6 hover:shadow-xl transition-all"
                                 >
                                   {/* Price and Buy Section */}
-                                  <div className="flex items-center justify-between gap-6 mb-5 pb-5 border-b border-slate-100">
-                                    <div className="flex-1">
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-6 mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-slate-100">
+                                    <div className="flex-1 w-full">
                                       {offerData.price ? (
                                         <>
-                                          <div className="flex items-baseline gap-3 mb-2">
-                                            <div className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                          <div className="flex items-baseline gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+                                            <div className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                                               {offerData.price}
                                             </div>
-                                            <div className="text-lg font-semibold text-slate-900">USD</div>
+                                            <div className="text-base sm:text-lg font-semibold text-slate-900">USD</div>
                                           </div>
-                                          <div className="text-sm text-slate-600 font-medium">First year registration</div>
+                                          <div className="text-xs sm:text-sm text-slate-600 font-medium">First year registration</div>
                                         </>
                                       ) : (
-                                        <div className="text-2xl font-bold text-slate-700 mb-2">Live pricing available</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-slate-700 mb-2">Live pricing available</div>
                                       )}
                                     </div>
-                                    <div className="flex-shrink-0">
-                                      <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl text-white font-bold text-base group-hover:from-blue-500 group-hover:to-cyan-500 transition-all shadow-lg">
+                                    <div className="flex-shrink-0 w-full sm:w-auto">
+                                      <div className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg sm:rounded-xl text-white font-bold text-sm sm:text-base group-hover:from-blue-500 group-hover:to-cyan-500 transition-all shadow-lg">
                                         Buy Now
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                         </svg>
                                       </div>
@@ -1979,11 +2303,11 @@ Format as JSON:
 
                                   {/* Freebies Section - Compact */}
                                   {offerData.freebies && offerData.freebies.length > 0 && (
-                                    <div className="mb-4 pb-4 border-b border-slate-100">
-                                      <div className="flex flex-wrap items-center gap-2">
+                                    <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-slate-100">
+                                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                         <span className="text-xs font-medium text-slate-600">Includes:</span>
                                         {offerData.freebies.map((f) => (
-                                          <span key={f} className="text-xs px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700">
+                                          <span key={f} className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700">
                                             {f}
                                           </span>
                                         ))}
@@ -1992,34 +2316,34 @@ Format as JSON:
                                   )}
 
                                   {/* Trust Factors */}
-                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    <div className="flex items-center gap-2">
-                                      <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                       </svg>
-                                      <span className="text-xs font-semibold text-slate-700">Secure</span>
+                                      <span className="text-[10px] sm:text-xs font-semibold text-slate-700">Secure</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
-                                      <span className="text-xs font-semibold text-slate-700">Refund</span>
+                                      <span className="text-[10px] sm:text-xs font-semibold text-slate-700">Refund</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <svg className="w-5 h-5 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                       </svg>
-                                      <span className="text-xs font-semibold text-slate-700">Trusted</span>
+                                      <span className="text-[10px] sm:text-xs font-semibold text-slate-700">Trusted</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <svg className="w-5 h-5 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                       </svg>
-                                      <span className="text-xs font-semibold text-slate-700">Instant</span>
+                                      <span className="text-[10px] sm:text-xs font-semibold text-slate-700">Instant</span>
                                     </div>
                                   </div>
                                 </a>
-                                <p className="mt-3 text-center text-xs text-slate-500">Price is fetched live and may vary by region. USD pricing shown.</p>
+                                <p className="mt-2 sm:mt-3 text-center text-[10px] sm:text-xs text-slate-500 px-2">Price is fetched live and may vary by region. USD pricing shown.</p>
                               </div>
                             );
                           })()}
@@ -2565,6 +2889,31 @@ Format as JSON:
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                   </svg>
                                   <span className="text-[10px] sm:text-xs font-semibold text-amber-600">{t.privacyProtected}</span>
+                                </div>
+                              )}
+                              
+                              {/* Country and State in same card */}
+                              {(result.registrantCountry || result.registrantState) && (
+                                <div className="mt-3 pt-3 border-t border-slate-100">
+                                  <div className="flex flex-wrap gap-2">
+                                    {result.registrantCountry && (
+                                      <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 rounded-lg">
+                                        <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-700">{result.registrantCountry}</span>
+                                      </div>
+                                    )}
+                                    {result.registrantState && (
+                                      <div className="flex items-center gap-1.5 px-2 py-1 bg-teal-50 rounded-lg">
+                                        <svg className="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span className="text-[10px] sm:text-xs font-semibold text-teal-700">{result.registrantState}</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
