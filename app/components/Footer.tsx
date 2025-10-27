@@ -1,59 +1,30 @@
+import abbaslogicLogo from "../assets/abbaslogic-logo-footer.png";
+
 const Footer = () => {
   return (
-    <footer className="w-full bg-slate-900 text-white py-12 border-t border-slate-800 mt-auto">
+    <footer className="w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-16 border-t border-slate-700 mt-auto">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {/* Brand */}
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+          {/* Brand Section */}
+          <div className="lg:col-span-1">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                AL
-              </div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Abbas Logic
-              </h3>
+              <img 
+                src={abbaslogicLogo} 
+                alt="Abbas Logic Logo" 
+                className="h-12 w-auto"
+              />
             </div>
-            <p className="text-slate-400 leading-relaxed">
-              Building powerful tools to help you achieve more.
+            <p className="text-slate-300 leading-relaxed mb-6">
+              Empowering professionals with intelligent tools for resume analysis, website verification, and career advancement.
             </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-3 text-lg">Quick Links</h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="/#tools" className="text-slate-400 hover:text-white transition-colors">
-                  Tools
-                </a>
-              </li>
-              <li>
-                <a href="/about" className="text-slate-400 hover:text-white transition-colors">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="/hirelens" className="text-slate-400 hover:text-white transition-colors">
-                  HireLens
-                </a>
-              </li>
-              <li>
-                <a href="/contact" className="text-slate-400 hover:text-white transition-colors">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Connect */}
-          <div>
-            <h4 className="font-semibold mb-3 text-lg">Connect</h4>
-            <div className="flex gap-4 mb-4">
+            
+            {/* Social Links */}
+            <div className="flex gap-3">
               <a
                 href="https://www.linkedin.com/in/abbashaider14"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-slate-800 hover:bg-brand-primary rounded-full flex items-center justify-center transition-all duration-300"
+                className="w-10 h-10 bg-slate-700/50 hover:bg-brand-primary rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/50"
                 aria-label="LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -64,7 +35,7 @@ const Footer = () => {
                 href="https://github.com/abbashaider99"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-slate-800 hover:bg-brand-primary rounded-full flex items-center justify-center transition-all duration-300"
+                className="w-10 h-10 bg-slate-700/50 hover:bg-brand-primary rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/50"
                 aria-label="GitHub"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -75,7 +46,7 @@ const Footer = () => {
                 href="https://www.instagram.com/abbashaiderbaqri"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-slate-800 hover:bg-brand-primary rounded-full flex items-center justify-center transition-all duration-300"
+                className="w-10 h-10 bg-slate-700/50 hover:bg-brand-primary rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/50"
                 aria-label="Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -83,33 +54,130 @@ const Footer = () => {
                 </svg>
               </a>
             </div>
+          </div>
+
+          {/* Tools Section */}
+          <div>
+            <h4 className="font-bold mb-4 text-lg flex items-center">
+             
+              Our Tools
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <a href="/hirelens" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  HireLens - AI Resume Analyzer
+                </a>
+              </li>
+              <li>
+                <a href="/website-checker" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  Website Trust Checker
+                </a>
+              </li>
+              <li>
+                <a href="/ats-checker" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  ATS Score Checker
+                </a>
+              </li>
+              <li>
+                <a href="/#tools" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  View All Tools
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company Section */}
+          <div>
+            <h4 className="font-bold mb-4 text-lg flex items-center">
+             
+              Company
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <a href="/about" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  About Us
+                </a>
+              </li>
+              <li>
+                <a href="/contact" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  Contact
+                </a>
+              </li>
+              <li>
+                <a href="/privacy" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="/terms" className="text-slate-300 hover:text-purple-400 transition-colors flex items-center group">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
+                  Terms of Service
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Newsletter Section */}
+          <div>
+            <h4 className="font-bold mb-4 text-lg flex items-center">
+              <svg className="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Stay Updated
+            </h4>
+            <p className="text-slate-300 text-sm mb-4">
+              Get the latest updates on new tools and features.
+            </p>
+            <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-slate-400 transition-all"
+              />
+              <button
+                type="submit"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-secondary text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="border-t border-slate-700 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-400 text-sm">
-              Developed by{" "}
+              © {new Date().getFullYear()} Abbas Logic. All rights reserved.
+            </p>
+            <div className="flex items-center gap-4 text-sm text-slate-400">
+              <span>Developed by</span>
               <a
                 href="https://techglobiz.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-primary hover:text-purple-400 transition-colors"
+                className="text-brand-primary hover:text-purple-400 transition-colors font-semibold"
               >
                 TechGlobiz
               </a>
-              {" & "}
+              <span>•</span>
               <a
                 href="https://github.com/abbashaider99"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-brand-primary hover:text-purple-400 transition-colors"
+                className="text-brand-primary hover:text-purple-400 transition-colors font-semibold"
               >
                 Abbas Haider
               </a>
-            </p>
+            </div>
           </div>
-        </div>
-
-        <div className="border-t border-slate-800 pt-8 text-center">
-          <p className="text-slate-400">
-            © {new Date().getFullYear()} Abbas Logic. All rights reserved.
-          </p>
         </div>
       </div>
     </footer>
