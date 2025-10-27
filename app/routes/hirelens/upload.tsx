@@ -79,46 +79,144 @@ const Upload = () => {
     }
 
     return (
-        <main className="bg-[url('/images/bg-main.svg')] bg-cover">
+        <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
             <Navbar />
 
-            <section className="main-section">
-                <div className="page-heading py-16">
-                    <h1>Smart feedback for your dream job</h1>
+            <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div className="text-center mb-12">
+                    <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        Step 1 of 2
+                    </div>
+                    
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-4">
+                        Upload Your{" "}
+                        <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+                            Resume
+                        </span>
+                    </h1>
+                    
                     {isProcessing ? (
-                        <>
-                            <h2>{statusText}</h2>
-                            <img src="/images/resume-scan.gif" alt="Analyzing resume" className="w-full" />
-                        </>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-center gap-3">
+                                <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
+                                <h2 className="text-2xl text-purple-600 font-semibold">{statusText}</h2>
+                            </div>
+                            <img src="/images/resume-scan.gif" alt="Analyzing resume" className="w-full max-w-md mx-auto rounded-2xl shadow-lg" />
+                        </div>
                     ) : (
-                        <h2>Drop your resume for an ATS score and improvement tips</h2>
+                        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                            Add your job details and upload your resume for personalized AI-powered feedback
+                        </p>
                     )}
-                    {!isProcessing && (
-                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 mt-8">
-                            <div className="form-div">
-                                <label htmlFor="company-name">Company Name</label>
-                                <input type="text" name="company-name" placeholder="Company Name" id="company-name" />
-                            </div>
-                            <div className="form-div">
-                                <label htmlFor="job-title">Job Title</label>
-                                <input type="text" name="job-title" placeholder="Job Title" id="job-title" />
-                            </div>
-                            <div className="form-div">
-                                <label htmlFor="job-description">Job Description</label>
-                                <textarea rows={5} name="job-description" placeholder="Job Description" id="job-description" />
+                </div>
+
+                {!isProcessing && (
+                    <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-8 sm:p-10">
+                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+                            {/* Job Details Section */}
+                            <div className="flex flex-col gap-4 w-full">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Job Details (Optional)</h3>
+                                </div>
+                                
+                                <div className="flex flex-col md:flex-row gap-4 w-full">
+                                    <div className="flex flex-col gap-2 flex-1 min-w-0">
+                                        <label htmlFor="company-name" className="block text-sm font-semibold text-slate-700">
+                                            Company Name
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="company-name" 
+                                            placeholder="e.g., Google, Microsoft" 
+                                            id="company-name"
+                                            className="w-full px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-base"
+                                        />
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-2 flex-1 min-w-0">
+                                        <label htmlFor="job-title" className="block text-sm font-semibold text-slate-700">
+                                            Job Title
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="job-title" 
+                                            placeholder="e.g., Software Engineer" 
+                                            id="job-title"
+                                            className="w-full px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-base"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-2 w-full">
+                                    <label htmlFor="job-description" className="block text-sm font-semibold text-slate-700">
+                                        Job Description
+                                    </label>
+                                    <textarea 
+                                        rows={5} 
+                                        name="job-description" 
+                                        placeholder="Paste the job description here for more tailored feedback..." 
+                                        id="job-description"
+                                        className="w-full px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none text-base"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="form-div">
-                                <label htmlFor="uploader">Upload Resume</label>
+                            {/* Divider */}
+                            <div className="relative my-4">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-slate-200"></div>
+                                </div>
+                                <div className="relative flex justify-center text-sm">
+                                    <span className="px-4 bg-white text-slate-500 font-medium">Required</span>
+                                </div>
+                            </div>
+
+                            {/* Resume Upload Section */}
+                            <div className="flex flex-col gap-4 w-full">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900">Upload Resume</h3>
+                                </div>
+                                
                                 <FileUploader onFileSelect={handleFileSelect} />
                             </div>
 
-                            <button className="primary-button" type="submit">
-                                Analyze Resume
+                            {/* Submit Button */}
+                            <button 
+                                className="w-full mt-8 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2" 
+                                type="submit"
+                                disabled={!file}
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                <span>Analyze Resume with AI</span>
                             </button>
+
+                            {/* Info Box */}
+                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
+                                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                                <p className="text-sm text-blue-800">
+                                    <span className="font-semibold">Pro tip:</span> Adding job details helps our AI provide more targeted feedback specific to the role you're applying for!
+                                </p>
+                            </div>
                         </form>
-                    )}
-                </div>
+                    </div>
+                )}
             </section>
         </main>
     )
