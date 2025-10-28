@@ -32,21 +32,32 @@ const ResumeCard = ({ resume: { id, companyName, jobTitle, feedback, imagePath, 
         setShowDeleteModal(false);
         
         try {
-            // Delete files from storage
-            if (resumePath) await fs.delete(resumePath);
-            if (imagePath) await fs.delete(imagePath);
+            // Try to delete files from storage (non-critical if they fail)
+            try {
+                if (resumePath) {
+                    console.log("🗑️ Deleting resume file:", resumePath);
+                    await fs.delete(resumePath);
+                }
+                if (imagePath) {
+                    console.log("🗑️ Deleting image file:", imagePath);
+                    await fs.delete(imagePath);
+                }
+            } catch (fileError) {
+                console.warn("⚠️ Error deleting files (continuing anyway):", fileError);
+                // Don't throw - files might not exist or already be deleted
+            }
             
             // Show success message briefly
             setShowSuccess(true);
             
-            // Call parent's delete handler after a short delay for UX
+            // Call parent's delete handler (this will delete from KV store)
             setTimeout(() => {
                 if (onDelete) {
                     onDelete(id);
                 }
             }, 800);
         } catch (error) {
-            console.error('Error deleting resume:', error);
+            console.error('❌ Error deleting resume:', error);
             setIsDeleting(false);
             alert('Failed to delete resume. Please try again.');
         }

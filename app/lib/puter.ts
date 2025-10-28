@@ -382,12 +382,23 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     };
 
     const deleteKV = async (key: string) => {
+        console.log("🔧 deleteKV called with key:", key);
         const puter = getPuter();
         if (!puter) {
+            console.error("❌ deleteKV: Puter.js not available");
             setError("Puter.js not available");
             return;
         }
-        return puter.kv.delete(key);
+        console.log("🔧 deleteKV: Puter available, calling puter.kv.delete");
+        console.log("🔧 puter.kv.delete type:", typeof puter.kv.delete);
+        try {
+            const result = await puter.kv.delete(key);
+            console.log("✅ deleteKV: Delete successful, result:", result);
+            return result;
+        } catch (error) {
+            console.error("❌ deleteKV: Error during delete:", error);
+            throw error;
+        }
     };
 
     const listKV = async (pattern: string, returnValues?: boolean) => {
