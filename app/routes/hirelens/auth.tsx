@@ -20,22 +20,21 @@ const Auth = () => {
     return (
         <main className="bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 min-h-screen flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md">
-                <div className="space-y-6">
+                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8">
                     {/* Header */}
-                    <div className="text-center space-y-3">
-                        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                            Welcome to{" "}
+                    <div className="text-center mb-6">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
                             <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
                                 HireLens
                             </span>
                         </h1>
-                        <p className="text-base sm:text-lg text-slate-600">
+                        <p className="text-sm sm:text-base text-slate-600">
                             Sign in to access AI-powered resume analysis
                         </p>
                     </div>
 
                     {/* Security Features */}
-                    <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4 space-y-2.5">
+                    <div className="mb-6 space-y-2.5 bg-slate-50 rounded-xl p-4">
                         <div className="flex items-center gap-3 text-slate-700">
                             <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                                 <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -71,54 +70,51 @@ const Auth = () => {
                         </div>
                     </div>
 
-                    {/* Sign In Form */}
-                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8">
-                        {/* Sign In Button */}
-                        <div className="space-y-4">
-                            {isLoading ? (
-                                <button 
-                                    disabled
-                                    className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg opacity-75 flex items-center justify-center gap-2"
-                                >
-                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                    <span>Signing in...</span>
-                                </button>
-                            ) : (
-                                <>
-                                    {auth.isAuthenticated ? (
-                                        <button 
-                                            onClick={auth.signOut}
-                                            className="w-full px-6 py-3.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                            </svg>
-                                            <span>Sign Out</span>
-                                        </button>
-                                    ) : (
-                                        <button 
-                                            onClick={auth.signIn}
-                                            className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 group"
-                                        >
-                                            <svg className="w-5 h-5 transition-transform group-hover:translate-x-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                            </svg>
-                                            <span>Sign In with Puter</span>
-                                        </button>
-                                    )}
-                                </>
-                            )}
+                    {/* Sign In Button */}
+                    <div className="space-y-4">
+                        {isLoading ? (
+                            <button 
+                                disabled
+                                className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg opacity-75 flex items-center justify-center gap-2"
+                            >
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                <span>Signing in...</span>
+                            </button>
+                        ) : (
+                            <>
+                                {auth.isAuthenticated ? (
+                                    <button 
+                                        onClick={auth.signOut}
+                                        className="w-full px-6 py-3.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                        </svg>
+                                        <span>Sign Out</span>
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={auth.signIn}
+                                        className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 group"
+                                    >
+                                        <svg className="w-5 h-5 transition-transform group-hover:translate-x-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                        </svg>
+                                        <span>Sign In with Puter</span>
+                                    </button>
+                                )}
+                            </>
+                        )}
 
-                            {/* Info Text */}
-                            <div className="text-center pt-3 border-t border-slate-100">
-                                <p className="text-xs text-slate-500">
-                                    Secured by{" "}
-                                    <a href="https://puter.com" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-semibold underline decoration-purple-200 hover:decoration-purple-400 transition-colors">
-                                        Puter
-                                    </a>
-                                    {" "}• 256-bit SSL encryption
-                                </p>
-                            </div>
+                        {/* Info Text */}
+                        <div className="text-center pt-3 border-t border-slate-100">
+                            <p className="text-xs text-slate-500">
+                                Secured by{" "}
+                                <a href="https://puter.com" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-semibold underline decoration-purple-200 hover:decoration-purple-400 transition-colors">
+                                    Puter
+                                </a>
+                                {" "}• 256-bit SSL encryption
+                            </p>
                         </div>
                     </div>
                 </div>
