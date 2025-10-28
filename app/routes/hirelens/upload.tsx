@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from "react-router";
 import FileUploader from "~/components/FileUploader";
 import Navbar from "~/components/Navbar";
@@ -7,6 +7,8 @@ import { usePuterStore } from "~/lib/puter";
 import { generateUUID } from "~/lib/utils";
 import { prepareInstructions } from "../../../constants";
 
+const FREE_PLAN_LIMIT = 5;
+
 const Upload = () => {
     const { auth, isLoading, fs, ai, kv } = usePuterStore();
     const navigate = useNavigate();
@@ -14,15 +16,41 @@ const Upload = () => {
     const [statusText, setStatusText] = useState('');
     const [progress, setProgress] = useState(0);
     const [file, setFile] = useState<File | null>(null);
+    const [showNotResumeModal, setShowNotResumeModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [usageCount, setUsageCount] = useState(0);
 
     const handleFileSelect = (file: File | null) => {
         setFile(file)
     }
 
+    // Check usage count on component mount
+    useEffect(() => {
+        const checkUsage = async () => {
+            if (!auth.isAuthenticated) return;
+            
+            try {
+                const usageData = await kv.get('resume_usage_count');
+                const count = usageData ? parseInt(usageData) : 0;
+                setUsageCount(count);
+            } catch (error) {
+                console.error('Failed to get usage count:', error);
+            }
+        };
+        
+        checkUsage();
+    }, [auth.isAuthenticated, kv]);
+
     const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
         // Check if user is authenticated before proceeding
         if (!auth.isAuthenticated) {
             navigate(`/hirelens/auth?next=/hirelens/upload`);
+            return;
+        }
+
+        // Check usage limit
+        if (usageCount >= FREE_PLAN_LIMIT) {
+            setShowUpgradeModal(true);
             return;
         }
 
@@ -123,9 +151,9 @@ const Upload = () => {
                 // Validate that the feedback has the expected structure
                 if (!parsedFeedback.overallScore) {
                     console.error('Invalid feedback structure - missing overallScore');
-                    setStatusText('Error: This doesn\'t appear to be a resume.');
+                    setStatusText('');
                     setIsProcessing(false);
-                    alert('The uploaded file doesn\'t appear to be a valid resume. Please upload a professional resume PDF.');
+                    setShowNotResumeModal(true);
                     return;
                 }
                 
@@ -141,6 +169,12 @@ const Upload = () => {
 
             setStatusText('Saving results...');
             setProgress(95);
+            
+            // Increment usage count
+            const newUsageCount = usageCount + 1;
+            await kv.set('resume_usage_count', newUsageCount.toString());
+            setUsageCount(newUsageCount);
+            
             await kv.set(`resume:${uuid}`, JSON.stringify(data));
             
             setStatusText('Complete! Redirecting...');
@@ -481,7 +515,164 @@ const Upload = () => {
                         </form>
                     </div>
                 )}
+
+                {/* Usage Counter Badge - Show when authenticated and not processing */}
+                {auth.isAuthenticated && !isProcessing && (
+                    <div className="mt-6 flex justify-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-full">
+                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-sm font-semibold text-slate-700">
+                                {usageCount} / {FREE_PLAN_LIMIT} Free Analyses Used
+                            </span>
+                            {usageCount >= FREE_PLAN_LIMIT && (
+                                <span className="ml-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full">
+                                    Limit Reached
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
             </section>
+
+            {/* Not a Resume Modal */}
+            {showNotResumeModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 animate-in zoom-in duration-300">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            {/* Icon */}
+                            <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center">
+                                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-2xl font-bold text-slate-900">
+                                Not a Resume
+                            </h3>
+
+                            {/* Message */}
+                            <p className="text-slate-600 leading-relaxed">
+                                The uploaded file doesn't appear to be a valid resume. Please upload a professional resume PDF that includes:
+                            </p>
+
+                            {/* Checklist */}
+                            <div className="w-full bg-slate-50 rounded-xl p-4 space-y-2 text-left">
+                                <div className="flex items-start gap-2">
+                                    <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-sm text-slate-700">Contact information</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-sm text-slate-700">Work experience or education</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-sm text-slate-700">Skills or qualifications</span>
+                                </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <button
+                                onClick={() => setShowNotResumeModal(false)}
+                                className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Upgrade Modal */}
+            {showUpgradeModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 animate-in zoom-in duration-300">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            {/* Icon */}
+                            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                                Free Limit Reached
+                            </h3>
+
+                            {/* Message */}
+                            <p className="text-slate-600 leading-relaxed">
+                                You've used all <span className="font-bold text-purple-600">{FREE_PLAN_LIMIT} free resume analyses</span>. Upgrade to continue analyzing unlimited resumes with advanced AI insights!
+                            </p>
+
+                            {/* Features List */}
+                            <div className="w-full bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 space-y-3 text-left border-2 border-purple-200">
+                                <p className="text-sm font-bold text-purple-900 uppercase tracking-wide">Pro Plan Includes:</p>
+                                <div className="space-y-2">
+                                    <div className="flex items-start gap-2">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-sm text-slate-700"><strong>Unlimited</strong> resume analyses</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-sm text-slate-700"><strong>Priority</strong> AI processing</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-sm text-slate-700"><strong>Advanced</strong> ATS optimization tips</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-sm text-slate-700"><strong>Save & compare</strong> multiple versions</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="w-full space-y-3 mt-4">
+                                <button
+                                    onClick={() => {
+                                        setShowUpgradeModal(false);
+                                        // TODO: Navigate to pricing or upgrade page
+                                        navigate('/');
+                                    }}
+                                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                                >
+                                    Upgrade to Pro
+                                </button>
+                                <button
+                                    onClick={() => setShowUpgradeModal(false)}
+                                    className="w-full px-6 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-all duration-300"
+                                >
+                                    Maybe Later
+                                </button>
+                            </div>
+
+                            {/* Small note */}
+                            <p className="text-xs text-slate-500 mt-2">
+                                Your previous analyses are saved and accessible anytime
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     )
 }
