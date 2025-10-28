@@ -169,7 +169,7 @@ const Upload = () => {
                                         <div className="space-y-4">
                                             {/* Step 1 */}
                                             <div className={`relative transition-all duration-500 ${progress >= 10 ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-2'}`}>
-                                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
                                                     <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 40 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'}`}>
                                                         {progress >= 40 ? (
                                                             <svg className="w-5 h-5 text-white animate-bounce" fill="currentColor" viewBox="0 0 20 20">
@@ -184,10 +184,9 @@ const Upload = () => {
                                                         )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm sm:text-base font-bold text-slate-900 mb-1">Uploading & Converting</p>
-                                                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">Securely uploading your resume and converting it to image format</p>
+                                                        <p className="text-sm sm:text-base font-bold text-slate-900">Uploading & Converting</p>
                                                         {progress >= 10 && progress < 40 && (
-                                                            <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-medium">
+                                                            <div className="mt-1 flex items-center gap-2 text-xs text-purple-600 font-medium">
                                                                 <div className="flex gap-1">
                                                                     <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"></div>
                                                                     <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -202,7 +201,7 @@ const Upload = () => {
 
                                             {/* Step 2 */}
                                             <div className={`relative transition-all duration-500 ${progress >= 70 ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-2'}`}>
-                                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
                                                     <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 90 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'}`}>
                                                         {progress >= 90 ? (
                                                             <svg className="w-5 h-5 text-white animate-bounce" fill="currentColor" viewBox="0 0 20 20">
@@ -217,10 +216,9 @@ const Upload = () => {
                                                         )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm sm:text-base font-bold text-slate-900 mb-1">AI Analysis</p>
-                                                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">Our AI is analyzing your resume for ATS compatibility and improvements</p>
+                                                        <p className="text-sm sm:text-base font-bold text-slate-900">AI Analysis</p>
                                                         {progress >= 70 && progress < 90 && (
-                                                            <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-medium">
+                                                            <div className="mt-1 flex items-center gap-2 text-xs text-purple-600 font-medium">
                                                                 <div className="flex gap-1">
                                                                     <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"></div>
                                                                     <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -235,7 +233,7 @@ const Upload = () => {
 
                                             {/* Step 3 */}
                                             <div className={`relative transition-all duration-500 ${progress >= 100 ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-2'}`}>
-                                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
                                                     <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 100 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'}`}>
                                                         {progress >= 100 ? (
                                                             <svg className="w-5 h-5 text-white animate-bounce" fill="currentColor" viewBox="0 0 20 20">
@@ -248,10 +246,9 @@ const Upload = () => {
                                                         )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm sm:text-base font-bold text-slate-900 mb-1">Finalizing Results</p>
-                                                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">Preparing your personalized feedback and recommendations</p>
+                                                        <p className="text-sm sm:text-base font-bold text-slate-900">Finalizing Results</p>
                                                         {progress >= 100 && (
-                                                            <div className="mt-2 flex items-center gap-2 text-xs text-green-600 font-medium">
+                                                            <div className="mt-1 flex items-center gap-2 text-xs text-green-600 font-medium">
                                                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                                                 </svg>
