@@ -265,7 +265,7 @@ const PrivacyBox = () => (
   </section>
 );
 
-const ResumeGrid = ({ resumes, loading }: { resumes: Resume[]; loading: boolean }) => {
+const ResumeGrid = ({ resumes, loading, onDelete }: { resumes: Resume[]; loading: boolean; onDelete: (id: string) => void }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -314,7 +314,7 @@ const ResumeGrid = ({ resumes, loading }: { resumes: Resume[]; loading: boolean 
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-10 text-center">Your Recent Resumes</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {resumes.map((resume) => (
-            <ResumeCard key={resume.id} resume={resume} />
+            <ResumeCard key={resume.id} resume={resume} onDelete={onDelete} />
           ))}
         </div>
       </div>
@@ -362,12 +362,24 @@ export default function Home() {
     loadResumes();
   }, [auth.isAuthenticated]);
 
+  const handleDeleteResume = async (id: string) => {
+    try {
+      // Delete from KV store
+      await kv.delete(`resume:${id}`);
+      
+      // Update local state
+      setResumes(prevResumes => prevResumes.filter(resume => resume.id !== id));
+    } catch (error) {
+      console.error("Error deleting resume from KV store:", error);
+    }
+  };
+
   return (
     // Apply bg-white to the root element to cover the navbar area too
     <div className="min-h-screen bg-white">
       <Navbar />
         <Hero />
-        <ResumeGrid resumes={resumes} loading={loadingResumes} />
+        <ResumeGrid resumes={resumes} loading={loadingResumes} onDelete={handleDeleteResume} />
         <HowItWorks />
         <PrivacyBox />
     </div>
