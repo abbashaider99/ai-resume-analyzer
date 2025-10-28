@@ -84,43 +84,77 @@ const Upload = () => {
             setStatusText('Analyzing with AI...');
             setProgress(70);
 
+            console.log('Starting AI analysis...');
             const feedback = await ai.feedback(
                 uploadedFile.path,
                 prepareInstructions({ jobTitle, jobDescription })
             );
             
+            console.log('AI feedback received:', feedback);
+            
             if (!feedback) {
                 setStatusText('Error: AI analysis failed. Please try again.');
                 setIsProcessing(false);
+                alert('AI analysis failed. Please ensure you uploaded a valid resume PDF and try again.');
                 return;
             }
 
-            setProgress(90);
+            if (!feedback.message || !feedback.message.content) {
+                console.error('Invalid feedback structure:', feedback);
+                setStatusText('Error: Invalid AI response format.');
+                setIsProcessing(false);
+                alert('Received invalid response from AI. Please try again.');
+                return;
+            }
+
+            setStatusText('Processing results...');
+            setProgress(85);
+            
             const feedbackText = typeof feedback.message.content === 'string'
                 ? feedback.message.content
                 : feedback.message.content[0].text;
 
+            console.log('Feedback text:', feedbackText);
+
             try {
-                data.feedback = JSON.parse(feedbackText);
+                const parsedFeedback = JSON.parse(feedbackText);
+                console.log('Parsed feedback:', parsedFeedback);
+                
+                // Validate that the feedback has the expected structure
+                if (!parsedFeedback.overallScore) {
+                    console.error('Invalid feedback structure - missing overallScore');
+                    setStatusText('Error: This doesn\'t appear to be a resume.');
+                    setIsProcessing(false);
+                    alert('The uploaded file doesn\'t appear to be a valid resume. Please upload a professional resume PDF.');
+                    return;
+                }
+                
+                data.feedback = parsedFeedback;
             } catch (parseError) {
                 console.error('Failed to parse AI feedback:', parseError);
-                setStatusText('Error: Invalid AI response. Please try again.');
+                console.error('Raw feedback text:', feedbackText);
+                setStatusText('Error: Invalid AI response format.');
                 setIsProcessing(false);
+                alert('Failed to process AI response. Please try again or contact support.');
                 return;
             }
 
+            setStatusText('Saving results...');
+            setProgress(95);
             await kv.set(`resume:${uuid}`, JSON.stringify(data));
-            setStatusText('Analysis complete, redirecting...');
+            
+            setStatusText('Complete! Redirecting...');
             setProgress(100);
-            console.log(data);
+            console.log('Analysis complete. Data:', data);
             
             setTimeout(() => {
                 navigate(`/hirelens/resume/${uuid}`);
-            }, 500);
+            }, 800);
         } catch (error) {
             console.error('Error during analysis:', error);
-            setStatusText('Error: Something went wrong. Please try again.');
+            setStatusText('Error: Something went wrong.');
             setIsProcessing(false);
+            alert(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
         }
     }
 
