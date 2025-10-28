@@ -1,5 +1,5 @@
-import Navbar from "~/components/Navbar";
 import Footer from "~/components/Footer";
+import Navbar from "~/components/Navbar";
 
 export const meta = () => [
   { title: "About | HireLens - AI Resume Analyzer by Abbas Haider" },
@@ -106,50 +106,70 @@ export default function About() {
         </div>
       </section>
 
-      {/* About HireLens */}
+      {/* My Professional Journey */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-              About{" "}
+              My Professional{" "}
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                HireLens
+                Journey
               </span>
             </h2>
             <p className="text-lg text-slate-600 max-w-3xl mx-auto">
-              AI-powered resume analysis tool designed to help job seekers optimize their resumes and land their dream jobs
+              From education administration to full-stack development—building innovative solutions that make a difference
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Mission */}
+            {/* Background */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-100">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Where I Started</h3>
+              <p className="text-slate-700 leading-relaxed">
+                My career began as an <strong>Education Administrator</strong>, where I developed essential skills in 
+                communication, problem-solving, and helping others achieve their goals. This experience taught me the 
+                importance of understanding user needs and delivering solutions that truly matter.
+              </p>
+            </div>
+
+            {/* Transition */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-100">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Our Mission</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">The Transition</h3>
               <p className="text-slate-700 leading-relaxed">
-                To empower job seekers with AI-driven insights that help them create compelling resumes, 
-                stand out from the competition, and successfully navigate their career journey.
+                Following my passion for technology, I transitioned into <strong>full-stack development</strong>. 
+                I immersed myself in the MERN stack, completed certifications in Google Cloud, SQL, and Data Science, 
+                and started building real-world applications that solve meaningful problems.
               </p>
             </div>
+          </div>
 
-            {/* Vision */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-100">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          {/* HireLens Card */}
+          <div className="mt-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Our Vision</h3>
-              <p className="text-slate-700 leading-relaxed">
-                To become the go-to platform for resume optimization, helping millions of job seekers 
-                worldwide achieve their career aspirations through intelligent, personalized feedback.
-              </p>
+              <h3 className="text-2xl font-bold">Why I Built HireLens</h3>
             </div>
+            <p className="text-white/90 leading-relaxed text-lg">
+              HireLens was born from my own experience navigating the job market. I saw talented individuals struggle to 
+              present their skills effectively. By combining AI with my development expertise, I created a tool that provides 
+              instant, personalized feedback—helping job seekers optimize their resumes and increase their chances of landing 
+              their dream jobs. It's my way of using technology to help others achieve their career goals, just like I once 
+              helped students achieve their academic goals.
+            </p>
           </div>
         </div>
       </section>
@@ -157,31 +177,32 @@ export default function About() {
       {/* My Story */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8 text-center">My Journey</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8 text-center">What Drives Me</h2>
           
           <div className="space-y-6 text-lg text-slate-700 leading-relaxed">
             <p>
-              I'm a passionate <strong className="text-purple-600">MERN Stack Developer</strong> with a unique journey into tech. 
-              I started my career as an <strong>Education Administrator</strong>, where I developed strong communication and 
-              problem-solving skills while helping students achieve their academic goals.
+              As a <strong className="text-purple-600">MERN Stack Developer</strong>, I specialize in building dynamic, 
+              scalable, and user-focused web applications. My expertise spans <strong className="text-purple-600">JavaScript, 
+              React, Node.js, MongoDB</strong>, and API-driven architecture.
             </p>
             
             <p>
-              Following my passion for technology, I transitioned into full-time software development and never looked back. 
-              I specialize in <strong className="text-purple-600">JavaScript, React, Node.js, and MongoDB</strong>, building 
-              scalable web applications that solve real-world problems.
+              What sets me apart is my ability to combine technical skills with real-world problem-solving. I don't just 
+              write code—I build solutions that address genuine challenges people face. Whether it's improving system 
+              performance, enhancing UI/UX, or creating secure backend systems, I focus on delivering value.
             </p>
             
             <p>
-              HireLens was born from my own experience navigating the job market. I realized that many talented individuals 
-              struggle to present their skills effectively on paper. With AI and modern web technologies, I set out to create 
-              a tool that provides instant, actionable feedback to help job seekers optimize their resumes.
+              I'm a firm believer in <strong>continuous learning and growth</strong>. Beyond development, I've completed 
+              certifications in Google Cloud, SQL, Data Science Math Skills, Digital Marketing, and Communication Foundations. 
+              This well-rounded knowledge helps me approach problems from multiple angles and build more thoughtful, 
+              user-centric products.
             </p>
             
             <p>
-              I strongly believe in <strong>continuous learning</strong>. I've completed multiple certifications in 
-              Google Cloud, SQL, Data Science, Digital Marketing, and Communication—skills that help me build better, 
-              more thoughtful products.
+              I love turning ideas into meaningful digital experiences. Every project I work on is an opportunity to 
+              learn something new, push my boundaries, and create something that makes a positive impact. I'm always 
+              excited to take on innovative challenges that help me grow as a developer and as a problem solver.
             </p>
           </div>
         </div>

@@ -156,10 +156,10 @@ const Upload = () => {
                                     </div>
                                     
                                     {/* Processing Steps Info */}
-                                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-200 space-y-3">
-                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-3">What's Happening:</h3>
-                                        <div className="space-y-2">
-                                            <div className={`flex items-start gap-3 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
+                                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-200">
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-4">What's Happening:</h3>
+                                        <div className="space-y-3">
+                                            <div className={`flex items-center gap-3 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
                                                 <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 40 ? 'bg-green-500' : 'bg-purple-500'}`}>
                                                     {progress >= 40 ? (
                                                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -169,12 +169,12 @@ const Upload = () => {
                                                         <div className="w-2 h-2 bg-white rounded-full"></div>
                                                     )}
                                                 </div>
-                                                <div>
+                                                <div className="flex-1">
                                                     <p className="text-xs sm:text-sm font-semibold text-slate-900">Uploading & Converting</p>
                                                     <p className="text-xs text-slate-600">Securely uploading your resume</p>
                                                 </div>
                                             </div>
-                                            <div className={`flex items-start gap-3 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
+                                            <div className={`flex items-center gap-3 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
                                                 <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 90 ? 'bg-green-500' : 'bg-purple-500'}`}>
                                                     {progress >= 90 ? (
                                                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -184,12 +184,12 @@ const Upload = () => {
                                                         <div className="w-2 h-2 bg-white rounded-full"></div>
                                                     )}
                                                 </div>
-                                                <div>
+                                                <div className="flex-1">
                                                     <p className="text-xs sm:text-sm font-semibold text-slate-900">AI Analysis</p>
                                                     <p className="text-xs text-slate-600">Analyzing your resume with AI</p>
                                                 </div>
                                             </div>
-                                            <div className={`flex items-start gap-3 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
+                                            <div className={`flex items-center gap-3 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
                                                 <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 100 ? 'bg-green-500' : 'bg-purple-500'}`}>
                                                     {progress >= 100 ? (
                                                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -199,7 +199,7 @@ const Upload = () => {
                                                         <div className="w-2 h-2 bg-white rounded-full"></div>
                                                     )}
                                                 </div>
-                                                <div>
+                                                <div className="flex-1">
                                                     <p className="text-xs sm:text-sm font-semibold text-slate-900">Finalizing</p>
                                                     <p className="text-xs text-slate-600">Preparing your results</p>
                                                 </div>
