@@ -117,42 +117,106 @@ const Upload = () => {
                     </h1>
                     
                     {isProcessing ? (
-                        <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto">
-                            <div className="flex items-center justify-center gap-2 sm:gap-3">
-                                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-3 sm:border-4 border-purple-600 border-t-transparent"></div>
-                                <h2 className="text-lg sm:text-2xl text-purple-600 font-semibold">{statusText}</h2>
-                            </div>
-                            
-                            {/* Progress Bar */}
-                            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-purple-200">
-                                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                                    <span className="text-xs sm:text-sm font-semibold text-slate-700">Processing Progress</span>
-                                    <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                        {progress}%
-                                    </span>
-                                </div>
-                                
-                                {/* Progress Bar Track */}
-                                <div className="w-full h-3 sm:h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
-                                    <div 
-                                        className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full transition-all duration-500 ease-out shadow-lg relative"
-                                        style={{ width: `${progress}%` }}
-                                    >
-                                        {/* Animated shine effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+                        <div className="max-w-6xl mx-auto">
+                            <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-center">
+                                {/* Left Side - Progress */}
+                                <div className="space-y-4 sm:space-y-6">
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-3 sm:border-4 border-purple-600 border-t-transparent"></div>
+                                        <h2 className="text-lg sm:text-2xl text-purple-600 font-semibold">{statusText}</h2>
+                                    </div>
+                                    
+                                    {/* Progress Bar */}
+                                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-purple-200">
+                                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                                            <span className="text-xs sm:text-sm font-semibold text-slate-700">Processing Progress</span>
+                                            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                                {progress}%
+                                            </span>
+                                        </div>
+                                        
+                                        {/* Progress Bar Track */}
+                                        <div className="w-full h-3 sm:h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full transition-all duration-500 ease-out shadow-lg relative"
+                                                style={{ width: `${progress}%` }}
+                                            >
+                                                {/* Animated shine effect */}
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Progress Steps */}
+                                        <div className="mt-3 sm:mt-4 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
+                                            <span className={progress >= 10 ? 'text-purple-600 font-semibold' : ''}>Upload</span>
+                                            <span className={progress >= 40 ? 'text-purple-600 font-semibold' : ''}>Convert</span>
+                                            <span className={progress >= 70 ? 'text-purple-600 font-semibold' : ''}>Analyze</span>
+                                            <span className={progress >= 100 ? 'text-purple-600 font-semibold' : ''}>Complete</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Processing Steps Info */}
+                                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-200 space-y-3">
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-3">What's Happening:</h3>
+                                        <div className="space-y-2">
+                                            <div className={`flex items-start gap-3 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
+                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 40 ? 'bg-green-500' : 'bg-purple-500'}`}>
+                                                    {progress >= 40 ? (
+                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    ) : (
+                                                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs sm:text-sm font-semibold text-slate-900">Uploading & Converting</p>
+                                                    <p className="text-xs text-slate-600">Securely uploading your resume</p>
+                                                </div>
+                                            </div>
+                                            <div className={`flex items-start gap-3 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
+                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 90 ? 'bg-green-500' : 'bg-purple-500'}`}>
+                                                    {progress >= 90 ? (
+                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    ) : (
+                                                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs sm:text-sm font-semibold text-slate-900">AI Analysis</p>
+                                                    <p className="text-xs text-slate-600">Analyzing your resume with AI</p>
+                                                </div>
+                                            </div>
+                                            <div className={`flex items-start gap-3 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
+                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 100 ? 'bg-green-500' : 'bg-purple-500'}`}>
+                                                    {progress >= 100 ? (
+                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    ) : (
+                                                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs sm:text-sm font-semibold text-slate-900">Finalizing</p>
+                                                    <p className="text-xs text-slate-600">Preparing your results</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                {/* Progress Steps */}
-                                <div className="mt-3 sm:mt-4 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
-                                    <span className={progress >= 10 ? 'text-purple-600 font-semibold' : ''}>Upload</span>
-                                    <span className={progress >= 40 ? 'text-purple-600 font-semibold' : ''}>Convert</span>
-                                    <span className={progress >= 70 ? 'text-purple-600 font-semibold' : ''}>Analyze</span>
-                                    <span className={progress >= 100 ? 'text-purple-600 font-semibold' : ''}>Complete</span>
+                                {/* Right Side - Image */}
+                                <div className="flex items-center justify-center">
+                                    <img 
+                                        src="/images/resume-scan.gif" 
+                                        alt="Analyzing resume" 
+                                        className="w-full max-w-lg rounded-xl sm:rounded-2xl shadow-2xl border-2 border-purple-200"
+                                    />
                                 </div>
                             </div>
-                            
-                            <img src="/images/resume-scan.gif" alt="Analyzing resume" className="w-full max-w-md mx-auto rounded-xl sm:rounded-2xl shadow-lg" />
                         </div>
                     ) : (
                         <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto px-2">
