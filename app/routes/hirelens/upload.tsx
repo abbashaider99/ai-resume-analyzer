@@ -157,7 +157,7 @@ const Upload = () => {
                                     
                                     {/* Processing Steps Info - Single Card */}
                                     <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-200">
-                                        <div className="flex items-center gap-3 mb-6">
+                                        <div className="flex items-center gap-3 mb-4">
                                             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg">
                                                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -166,7 +166,10 @@ const Upload = () => {
                                             <h3 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">What's Happening</h3>
                                         </div>
                                         
-                                        <div className="space-y-5">
+                                        {/* Divider */}
+                                        <div className="border-t border-slate-200 mb-5"></div>
+                                        
+                                        <div className="space-y-3">
                                             {/* Step 1 */}
                                             <div className={`flex items-center gap-4 transition-all duration-500 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
                                                 <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 40 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
@@ -202,7 +205,7 @@ const Upload = () => {
                                             </div>
 
                                             {/* Connecting Line */}
-                                            <div className={`ml-5 border-l-2 h-4 transition-colors duration-500 ${progress >= 40 ? 'border-green-500' : progress >= 10 ? 'border-purple-500' : 'border-slate-300'}`}></div>
+                                            <div className={`ml-5 border-l-2 h-3 transition-colors duration-500 ${progress >= 40 ? 'border-green-500' : progress >= 10 ? 'border-purple-500' : 'border-slate-300'}`}></div>
 
                                             {/* Step 2 */}
                                             <div className={`flex items-center gap-4 transition-all duration-500 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
@@ -239,7 +242,7 @@ const Upload = () => {
                                             </div>
 
                                             {/* Connecting Line */}
-                                            <div className={`ml-5 border-l-2 h-4 transition-colors duration-500 ${progress >= 90 ? 'border-green-500' : progress >= 70 ? 'border-purple-500' : 'border-slate-300'}`}></div>
+                                            <div className={`ml-5 border-l-2 h-3 transition-colors duration-500 ${progress >= 90 ? 'border-green-500' : progress >= 70 ? 'border-purple-500' : 'border-slate-300'}`}></div>
 
                                             {/* Step 3 */}
                                             <div className={`flex items-center gap-4 transition-all duration-500 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
