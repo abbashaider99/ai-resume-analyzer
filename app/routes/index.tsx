@@ -18,7 +18,7 @@ const tools: Tool[] = [
     id: "hirelens",
     name: "HireLens",
     description: "AI-powered resume analyzer that helps you optimize your resume for ATS systems and get hired faster.",
-    icon: "📄",
+    icon: "document",
     path: "/hirelens",
     color: "from-brand-primary to-brand-secondary",
     status: "live",
@@ -28,7 +28,7 @@ const tools: Tool[] = [
     id: "bmi-calculator",
     name: "BMI Calculator",
     description: "Calculate your Body Mass Index and get AI-powered personalized health improvement tips and recommendations.",
-    icon: "💪",
+    icon: "heart",
     path: "/bmi-calculator",
     color: "from-green-500 to-emerald-600",
     status: "live",
@@ -38,7 +38,7 @@ const tools: Tool[] = [
     id: "website-checker",
     name: "Website Checker",
     description: "Check if a website is safe and legitimate using AI-powered security analysis with trust scores and safety tips.",
-    icon: "🔒",
+    icon: "shield",
     path: "/website-checker",
     color: "from-blue-500 to-cyan-600",
     status: "live",
@@ -48,7 +48,7 @@ const tools: Tool[] = [
     id: "coming-soon-1",
     name: "More Tools",
     description: "More amazing tools are coming soon. Stay tuned!",
-    icon: "🚀",
+    icon: "sparkles",
     path: "#",
     color: "from-gray-400 to-gray-500",
     status: "coming-soon",
@@ -57,8 +57,39 @@ const tools: Tool[] = [
 ];
 
 // --- Components ---
+const getToolIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'document':
+      return (
+        <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      );
+    case 'heart':
+      return (
+        <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      );
+    case 'shield':
+      return (
+        <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      );
+    case 'sparkles':
+      return (
+        <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
 const Hero = () => (
-  <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-pink-50 py-20 px-4 sm:px-6 lg:px-8">
+  <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-pink-50 py-20 px-4 sm:px-6 lg:px-8 mt-16">
     {/* Floating 3D Elements */}
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Large gradient orb - top right */}
@@ -140,7 +171,7 @@ const ToolCard = ({ tool }: { tool: Tool }) => {
 
   if (isComingSoon) {
     return (
-      <div className="relative bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden opacity-70">
+      <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden opacity-70 hover:shadow-xl transition-shadow duration-300">
         {/* Status Badge */}
         <div className="absolute top-4 right-4 z-10">
           <span className="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs font-semibold rounded-full shadow-sm">
@@ -158,8 +189,8 @@ const ToolCard = ({ tool }: { tool: Tool }) => {
 
         {/* Floating Icon */}
         <div className="absolute top-32 left-6">
-          <div className="w-16 h-16 bg-white rounded-xl shadow-xl flex items-center justify-center text-3xl border-2 border-white">
-            {tool.icon}
+          <div className="w-16 h-16 bg-white rounded-xl shadow-xl flex items-center justify-center text-white border-2 border-white">
+            {getToolIcon(tool.icon)}
           </div>
         </div>
 
@@ -191,7 +222,7 @@ const ToolCard = ({ tool }: { tool: Tool }) => {
   return (
     <Link
       to={tool.path}
-      className="group relative bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-purple-300 hover:-translate-y-1 cursor-pointer"
+      className="group relative bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-purple-300 hover:-translate-y-1 cursor-pointer"
     >
       {/* Modern Gradient Header with Pattern */}
       <div className={`h-40 bg-gradient-to-br ${tool.color} relative overflow-hidden`}>
@@ -203,8 +234,8 @@ const ToolCard = ({ tool }: { tool: Tool }) => {
 
       {/* Floating Icon with better shadow */}
       <div className="absolute top-32 left-6 transition-transform duration-300 group-hover:scale-110">
-        <div className="w-16 h-16 bg-white rounded-xl shadow-xl flex items-center justify-center text-3xl border-2 border-white group-hover:shadow-2xl group-hover:shadow-purple-500/30">
-          {tool.icon}
+        <div className={`w-16 h-16 bg-gradient-to-br ${tool.color} rounded-xl shadow-xl flex items-center justify-center text-white border-2 border-white group-hover:shadow-2xl group-hover:shadow-purple-500/30`}>
+          {getToolIcon(tool.icon)}
         </div>
       </div>
 
@@ -252,7 +283,7 @@ const ToolCard = ({ tool }: { tool: Tool }) => {
 };
 
 const ToolsSection = () => (
-  <section id="tools" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+  <section id="tools" className="py-20 px-4 sm:px-6 lg:px-8 bg-white mt-8">
     <div className="max-w-7xl mx-auto">
       {/* Section Header */}
       <div className="text-center mb-12">

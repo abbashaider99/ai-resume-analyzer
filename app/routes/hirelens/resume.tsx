@@ -16,6 +16,7 @@ const Resume = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [resumeUrl, setResumeUrl] = useState('');
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [showPreview, setShowPreview] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -52,18 +53,31 @@ const Resume = () => {
     return (
         <main className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
             <nav className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                     <Link to="/hirelens" className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border-2 border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 group">
                         <svg className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                         <span className="text-slate-700 font-semibold">Back to Dashboard</span>
                     </Link>
+                    
+                    {/* Toggle Preview Button */}
+                    <button
+                        onClick={() => setShowPreview(!showPreview)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span className="font-semibold">{showPreview ? 'Hide' : 'Show'} Resume</span>
+                    </button>
                 </div>
             </nav>
             
             <div className="flex flex-col lg:flex-row w-full">
-                {/* Resume Preview Section */}
+                {/* Resume Preview Section - Conditionally shown */}
+                {showPreview && (
                 <section className="w-full lg:w-1/2 bg-gradient-to-br from-slate-100 to-slate-50 min-h-[50vh] lg:min-h-screen lg:sticky lg:top-16 p-4 sm:p-6 flex items-center justify-center">
                     {imageUrl && resumeUrl ? (
                         <div className="animate-in fade-in duration-1000 w-full max-w-2xl">
@@ -98,9 +112,10 @@ const Resume = () => {
                         </div>
                     )}
                 </section>
+                )}
                 
-                {/* Feedback Section */}
-                <section className="w-full lg:w-1/2 px-4 sm:px-6 lg:px-12 py-8 sm:py-12 space-y-6 sm:space-y-8">
+                {/* Feedback Section - Full width when preview is hidden */}
+                <section className={`${showPreview ? 'w-full lg:w-1/2' : 'w-full'} px-4 sm:px-6 lg:px-12 py-8 sm:py-12 space-y-6 sm:space-y-8 max-w-7xl mx-auto`}>
                     <div className="space-y-3 sm:space-y-4">
                         <div className="inline-flex items-center px-3 sm:px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm font-semibold">
                             <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">

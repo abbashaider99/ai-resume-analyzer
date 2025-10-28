@@ -263,6 +263,15 @@ form {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -277,4 +286,8 @@ form {
 
 .animate-spin-slow {
   animation: spin-slow 20s linear infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }

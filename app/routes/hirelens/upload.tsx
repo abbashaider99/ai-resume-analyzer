@@ -12,6 +12,7 @@ const Upload = () => {
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
+    const [progress, setProgress] = useState(0);
     const [file, setFile] = useState<File | null>(null);
 
     const handleFileSelect = (file: File | null) => {
@@ -26,20 +27,25 @@ const Upload = () => {
         }
 
         setIsProcessing(true);
+        setProgress(0);
 
         setStatusText('Uploading the file...');
+        setProgress(10);
         const uploadedFile = await fs.upload([file]);
         if(!uploadedFile) return setStatusText('Error: Failed to upload file');
 
         setStatusText('Converting to image...');
+        setProgress(25);
         const imageFile = await convertPdfToImage(file);
         if(!imageFile.file) return setStatusText('Error: Failed to convert PDF to image');
 
         setStatusText('Uploading the image...');
+        setProgress(40);
         const uploadedImage = await fs.upload([imageFile.file]);
         if(!uploadedImage) return setStatusText('Error: Failed to upload image');
 
         setStatusText('Preparing data...');
+        setProgress(55);
         const uuid = generateUUID();
         const data = {
             id: uuid,
@@ -51,6 +57,7 @@ const Upload = () => {
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
         setStatusText('Analyzing...');
+        setProgress(70);
 
         const feedback = await ai.feedback(
             uploadedFile.path,
@@ -58,6 +65,7 @@ const Upload = () => {
         )
         if (!feedback) return setStatusText('Error: Failed to analyze resume');
 
+        setProgress(90);
         const feedbackText = typeof feedback.message.content === 'string'
             ? feedback.message.content
             : feedback.message.content[0].text;
@@ -65,8 +73,12 @@ const Upload = () => {
         data.feedback = JSON.parse(feedbackText);
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
         setStatusText('Analysis complete, redirecting...');
+        setProgress(100);
         console.log(data);
-        navigate(`/hirelens/resume/${uuid}`);
+        
+        setTimeout(() => {
+            navigate(`/hirelens/resume/${uuid}`);
+        }, 500);
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -105,11 +117,41 @@ const Upload = () => {
                     </h1>
                     
                     {isProcessing ? (
-                        <div className="space-y-4">
+                        <div className="space-y-6 max-w-2xl mx-auto">
                             <div className="flex items-center justify-center gap-3">
                                 <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
                                 <h2 className="text-2xl text-purple-600 font-semibold">{statusText}</h2>
                             </div>
+                            
+                            {/* Progress Bar */}
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-purple-200">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-sm font-semibold text-slate-700">Processing Progress</span>
+                                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                        {progress}%
+                                    </span>
+                                </div>
+                                
+                                {/* Progress Bar Track */}
+                                <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full transition-all duration-500 ease-out shadow-lg relative"
+                                        style={{ width: `${progress}%` }}
+                                    >
+                                        {/* Animated shine effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+                                    </div>
+                                </div>
+                                
+                                {/* Progress Steps */}
+                                <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                                    <span className={progress >= 10 ? 'text-purple-600 font-semibold' : ''}>Upload</span>
+                                    <span className={progress >= 40 ? 'text-purple-600 font-semibold' : ''}>Convert</span>
+                                    <span className={progress >= 70 ? 'text-purple-600 font-semibold' : ''}>Analyze</span>
+                                    <span className={progress >= 100 ? 'text-purple-600 font-semibold' : ''}>Complete</span>
+                                </div>
+                            </div>
+                            
                             <img src="/images/resume-scan.gif" alt="Analyzing resume" className="w-full max-w-md mx-auto rounded-2xl shadow-lg" />
                         </div>
                     ) : (
@@ -175,15 +217,7 @@ const Upload = () => {
                                 </div>
                             </div>
 
-                            {/* Divider */}
-                            <div className="relative my-4">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-200"></div>
-                                </div>
-                                <div className="relative flex justify-center text-sm">
-                                    <span className="px-4 bg-white text-slate-500 font-medium">Required</span>
-                                </div>
-                            </div>
+                            
 
                             {/* Resume Upload Section */}
                             <div className="flex flex-col gap-4 w-full">
@@ -213,20 +247,36 @@ const Upload = () => {
 
                             {/* Privacy & Tips */}
                             <div className="mt-6 space-y-3">
-                                {/* Privacy Notice */}
-                                <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded-xl flex items-start gap-3">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                            </svg>
+                                {/* Privacy Notice - Different message based on auth status */}
+                                {!auth.isAuthenticated ? (
+                                    <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded-xl flex items-start gap-3">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold text-purple-900 mb-1">Secure & Private Analysis</p>
+                                            <p className="text-xs text-purple-700 leading-relaxed">You'll be asked to sign in with Puter when analyzing—your data stays encrypted and under your control.</p>
                                         </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-semibold text-purple-900 mb-1">Secure & Private Analysis</p>
-                                        <p className="text-xs text-purple-700 leading-relaxed">You'll be asked to sign in with Puter when analyzing—your data stays encrypted and under your control.</p>
+                                ) : (
+                                    <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl flex items-start gap-3">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold text-green-900 mb-1">Your Data is Protected</p>
+                                            <p className="text-xs text-green-700 leading-relaxed">All your resume data is encrypted end-to-end and stored securely. Only you have access to your files and analysis results.</p>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 
                             </div>

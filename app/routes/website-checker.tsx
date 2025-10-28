@@ -801,21 +801,21 @@ Format your response as JSON:
     }
 
     // Generate safety tips
-    safetyTips.push("🔒 Never share passwords or financial information unless you're absolutely certain of legitimacy");
-    safetyTips.push("🔍 Look for contact information, privacy policy, and terms of service on the website");
-    safetyTips.push("⭐ Check online reviews and ratings from trusted sources like Trustpilot or BBB");
-    safetyTips.push("🛡️ Use antivirus software and keep your browser security features enabled");
+    safetyTips.push("Never share passwords or financial information unless you're absolutely certain of legitimacy");
+    safetyTips.push("Look for contact information, privacy policy, and terms of service on the website");
+    safetyTips.push("Check online reviews and ratings from trusted sources like Trustpilot or BBB");
+    safetyTips.push("Use antivirus software and keep your browser security features enabled");
     
     if (!sslStatus.includes("detected")) {
-      safetyTips.push("⚠️ Avoid entering sensitive data on non-HTTPS websites - your information could be intercepted");
+      safetyTips.push("Avoid entering sensitive data on non-HTTPS websites - your information could be intercepted");
     }
     
     if (trustScore < 60) {
-      safetyTips.push("✅ Consider using alternative, well-known websites for similar services");
+      safetyTips.push("Consider using alternative, well-known websites for similar services");
     }
 
     if (scamKeywords.length > 0) {
-      safetyTips.push("🚨 Be extra vigilant - suspicious keywords detected in domain name");
+      safetyTips.push("Be extra vigilant - suspicious keywords detected in domain name");
     }
 
     return { reasons, safetyTips };
@@ -3035,6 +3035,140 @@ Format as JSON:
                       </div>
                     </div>
 
+                    {/* AI Analysis - Positive and Negative Split */}
+                    {result.aiTrustAnalysis && result.aiTrustAnalysis.aiInsights && result.aiTrustAnalysis.aiInsights.length > 0 && (
+                      <div className="mb-6 sm:mb-8">
+                        <div className="relative mb-4 sm:mb-6">
+                          <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl blur-lg opacity-40"></div>
+                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                                AI Security Analysis
+                              </h3>
+                              <div className="h-1 w-16 sm:w-24 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full mt-1 sm:mt-2"></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                          {/* Positive Indicators */}
+                          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 sm:p-6 border-2 border-green-200 shadow-lg">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <h4 className="text-base sm:text-lg font-bold text-green-900">Positive Indicators</h4>
+                            </div>
+                            <div className="space-y-2 sm:space-y-3">
+                              {result.aiTrustAnalysis.aiInsights
+                                .filter(insight => 
+                                  insight.includes('✓') || 
+                                  insight.includes('✅') ||
+                                  insight.toLowerCase().includes('secure') ||
+                                  insight.toLowerCase().includes('valid') ||
+                                  insight.toLowerCase().includes('https') ||
+                                  insight.toLowerCase().includes('legitimate') ||
+                                  insight.toLowerCase().includes('good') ||
+                                  insight.toLowerCase().includes('positive') ||
+                                  insight.toLowerCase().includes('safe')
+                                )
+                                .map((insight, index) => (
+                                  <div key={index} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-white/60 rounded-lg border border-green-100">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-xs sm:text-sm text-green-900 leading-relaxed">{insight.replace(/✓|✅/g, '').trim()}</span>
+                                  </div>
+                                ))}
+                              {result.aiTrustAnalysis.aiInsights.filter(insight => 
+                                insight.includes('✓') || 
+                                insight.includes('✅') ||
+                                insight.toLowerCase().includes('secure') ||
+                                insight.toLowerCase().includes('valid') ||
+                                insight.toLowerCase().includes('https') ||
+                                insight.toLowerCase().includes('legitimate') ||
+                                insight.toLowerCase().includes('good') ||
+                                insight.toLowerCase().includes('positive') ||
+                                insight.toLowerCase().includes('safe')
+                              ).length === 0 && (
+                                <div className="text-center py-4 text-sm text-green-700">
+                                  <svg className="w-12 h-12 mx-auto mb-2 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  No specific positive indicators found
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Concerns & Recommendations */}
+                          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 sm:p-6 border-2 border-amber-200 shadow-lg">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <h4 className="text-base sm:text-lg font-bold text-amber-900">Concerns & Recommendations</h4>
+                            </div>
+                            <div className="space-y-2 sm:space-y-3">
+                              {result.aiTrustAnalysis.aiInsights
+                                .filter(insight => 
+                                  insight.includes('⚠') || 
+                                  insight.includes('❌') ||
+                                  insight.includes('⚡') ||
+                                  insight.toLowerCase().includes('risk') ||
+                                  insight.toLowerCase().includes('caution') ||
+                                  insight.toLowerCase().includes('warning') ||
+                                  insight.toLowerCase().includes('avoid') ||
+                                  insight.toLowerCase().includes('suspicious') ||
+                                  insight.toLowerCase().includes('concern') ||
+                                  insight.toLowerCase().includes('recommend') ||
+                                  insight.toLowerCase().includes('should')
+                                )
+                                .map((insight, index) => (
+                                  <div key={index} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-white/60 rounded-lg border border-amber-100">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-xs sm:text-sm text-amber-900 leading-relaxed">{insight.replace(/⚠|❌|⚡/g, '').trim()}</span>
+                                  </div>
+                                ))}
+                              {result.aiTrustAnalysis.aiInsights.filter(insight => 
+                                insight.includes('⚠') || 
+                                insight.includes('❌') ||
+                                insight.includes('⚡') ||
+                                insight.toLowerCase().includes('risk') ||
+                                insight.toLowerCase().includes('caution') ||
+                                insight.toLowerCase().includes('warning') ||
+                                insight.toLowerCase().includes('avoid') ||
+                                insight.toLowerCase().includes('suspicious') ||
+                                insight.toLowerCase().includes('concern') ||
+                                insight.toLowerCase().includes('recommend') ||
+                                insight.toLowerCase().includes('should')
+                              ).length === 0 && (
+                                <div className="text-center py-4 text-sm text-amber-700">
+                                  <svg className="w-12 h-12 mx-auto mb-2 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  No specific concerns identified
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Privacy Protection Info Note */}
                     {(result.registrationDate === "Information not available" || !result.contactEmail || !result.contactPhone) && (
                       <div className="mb-6 p-3 sm:p-4 bg-amber-50 rounded-xl border border-amber-200">
@@ -3077,7 +3211,7 @@ Format as JSON:
                       </div>
                     </div>
 
-                    {/* Key Findings Section */}
+                    {/* Key Findings Section - Split into Positive and Negative */}
                     <div className="mb-8">
                       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
@@ -3085,32 +3219,85 @@ Format as JSON:
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
-                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.keyFindings}</h3>
+                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">AI Analysis</h3>
                       </div>
 
-                      <ul className="space-y-2 sm:space-y-2.5 list-none">
-                        {(() => {
-                          console.log("Rendering reasons:", result.reasons, "Length:", result.reasons?.length);
-                          return null;
-                        })()}
-                        {result.reasons && result.reasons.length > 0 ? (
-                          result.reasons.map((reason, index) => (
-                            <li key={index} className="flex items-start gap-2 sm:gap-3">
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <span className="text-sm sm:text-base text-slate-700 flex-1">{reason}</span>
-                            </li>
-                          ))
-                        ) : (
-                          <li className="flex items-start gap-2 sm:gap-3">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-sm sm:text-base text-slate-500 flex-1 italic">Analyzing domain characteristics...</span>
-                          </li>
-                        )}
-                      </ul>
+                      {result.reasons && result.reasons.length > 0 ? (
+                        <div className="grid gap-6">
+                          {/* Positive Findings */}
+                          {(() => {
+                            const positiveFindings = result.reasons.filter(r => 
+                              r.includes('✅') || 
+                              r.toLowerCase().includes('secure') || 
+                              r.toLowerCase().includes('valid') ||
+                              r.toLowerCase().includes('https') ||
+                              r.toLowerCase().includes('legitimate') ||
+                              (!r.includes('⚠️') && !r.includes('❌') && !r.toLowerCase().includes('risk') && !r.toLowerCase().includes('caution'))
+                            ).map(r => r.replace(/✅/g, '').trim());
+                            
+                            return positiveFindings.length > 0 && (
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 sm:p-5 border-2 border-green-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  <h4 className="font-bold text-green-800">Positive Indicators</h4>
+                                </div>
+                                <ul className="space-y-2">
+                                  {positiveFindings.map((finding, index) => (
+                                    <li key={index} className="flex items-start gap-2">
+                                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                      </svg>
+                                      <span className="text-sm text-green-900">{finding}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Negative Findings */}
+                          {(() => {
+                            const negativeFindings = result.reasons.filter(r => 
+                              r.includes('⚠️') || 
+                              r.includes('❌') || 
+                              r.toLowerCase().includes('risk') || 
+                              r.toLowerCase().includes('caution') ||
+                              r.toLowerCase().includes('recommended') ||
+                              r.toLowerCase().includes('avoid')
+                            ).map(r => r.replace(/⚠️|❌/g, '').trim());
+                            
+                            return negativeFindings.length > 0 && (
+                              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 sm:p-5 border-2 border-amber-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                  <h4 className="font-bold text-amber-800">Concerns & Recommendations</h4>
+                                </div>
+                                <ul className="space-y-2">
+                                  {negativeFindings.map((finding, index) => (
+                                    <li key={index} className="flex items-start gap-2">
+                                      <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                      </svg>
+                                      <span className="text-sm text-amber-900">{finding}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2 sm:gap-3 p-4 bg-slate-50 rounded-lg">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-sm sm:text-base text-slate-500 flex-1 italic">Analyzing domain characteristics...</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Professional Divider */}
@@ -3127,27 +3314,47 @@ Format as JSON:
                     {/* Safety Recommendations Section */}
                     <div>
                       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                        </div>
                         <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">{t.safetyRecommendations}</h3>
                       </div>
 
-                      <ul className="space-y-2 sm:space-y-2.5 mb-6 ml-4">
-                        {(() => {
-                          console.log("Rendering safety tips:", result.safetyTips, "Length:", result.safetyTips?.length);
-                          return null;
-                        })()}
-                        {result.safetyTips && result.safetyTips.length > 0 ? (
-                          result.safetyTips.map((tip, index) => (
-                            <li key={index} className="text-sm sm:text-base text-slate-700">
-                              {tip}
+                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-5 border-2 border-purple-200">
+                        <ul className="space-y-3">
+                          {(() => {
+                            console.log("Rendering safety tips:", result.safetyTips, "Length:", result.safetyTips?.length);
+                            return null;
+                          })()}
+                          {result.safetyTips && result.safetyTips.length > 0 ? (
+                            result.safetyTips.map((tip, index) => (
+                              <li key={index} className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center mt-0.5">
+                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                  </svg>
+                                </div>
+                                <span className="text-sm sm:text-base text-slate-700 flex-1">{tip.replace(/🔒|🔍|⭐|🛡️|⚠️|✅|🚨/g, '').trim()}</span>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="flex items-start gap-3">
+                              <svg className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="text-sm sm:text-base text-purple-500 flex-1 italic">
+                                Generating safety recommendations...
+                              </span>
                             </li>
-                          ))
-                        ) : (
-                          <li className="text-sm sm:text-base text-slate-500 italic">
-                            Generating safety recommendations...
-                          </li>
-                        )}
-                      </ul>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
 
+                    {/* Disclaimer */}
+                    <div className="mt-6">
                       <div className="p-3 sm:p-4 bg-red-50 rounded-xl border border-red-100">
                         <p className="text-xs sm:text-sm text-red-800 flex items-start gap-2">
                           <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
