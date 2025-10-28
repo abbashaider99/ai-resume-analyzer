@@ -101,15 +101,15 @@ const Upload = () => {
             <Navbar />
 
             <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-                <div className="text-center mb-12">
-                    <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <div className="text-center mb-8 sm:mb-12">
+                    <div className="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                         Step 1 of 2
                     </div>
                     
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-4">
+                    <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 mb-3 sm:mb-4 px-2">
                         Upload Your{" "}
                         <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
                             Resume
@@ -117,23 +117,23 @@ const Upload = () => {
                     </h1>
                     
                     {isProcessing ? (
-                        <div className="space-y-6 max-w-2xl mx-auto">
-                            <div className="flex items-center justify-center gap-3">
-                                <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
-                                <h2 className="text-2xl text-purple-600 font-semibold">{statusText}</h2>
+                        <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto">
+                            <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-3 sm:border-4 border-purple-600 border-t-transparent"></div>
+                                <h2 className="text-lg sm:text-2xl text-purple-600 font-semibold">{statusText}</h2>
                             </div>
                             
                             {/* Progress Bar */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-purple-200">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-sm font-semibold text-slate-700">Processing Progress</span>
-                                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-purple-200">
+                                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                                    <span className="text-xs sm:text-sm font-semibold text-slate-700">Processing Progress</span>
+                                    <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                         {progress}%
                                     </span>
                                 </div>
                                 
                                 {/* Progress Bar Track */}
-                                <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                                <div className="w-full h-3 sm:h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
                                     <div 
                                         className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full transition-all duration-500 ease-out shadow-lg relative"
                                         style={{ width: `${progress}%` }}
@@ -144,7 +144,7 @@ const Upload = () => {
                                 </div>
                                 
                                 {/* Progress Steps */}
-                                <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                                <div className="mt-3 sm:mt-4 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
                                     <span className={progress >= 10 ? 'text-purple-600 font-semibold' : ''}>Upload</span>
                                     <span className={progress >= 40 ? 'text-purple-600 font-semibold' : ''}>Convert</span>
                                     <span className={progress >= 70 ? 'text-purple-600 font-semibold' : ''}>Analyze</span>
@@ -152,32 +152,32 @@ const Upload = () => {
                                 </div>
                             </div>
                             
-                            <img src="/images/resume-scan.gif" alt="Analyzing resume" className="w-full max-w-md mx-auto rounded-2xl shadow-lg" />
+                            <img src="/images/resume-scan.gif" alt="Analyzing resume" className="w-full max-w-md mx-auto rounded-xl sm:rounded-2xl shadow-lg" />
                         </div>
                     ) : (
-                        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                        <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto px-2">
                             Add your job details and upload your resume for personalized AI-powered feedback
                         </p>
                     )}
                 </div>
 
                 {!isProcessing && (
-                    <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-8 sm:p-10">
-                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-8 lg:p-10">
+                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-6 w-full">
                             {/* Job Details Section */}
-                            <div className="flex flex-col gap-4 w-full">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-slate-900">Job Details (Optional)</h3>
+                                    <h3 className="text-lg sm:text-2xl font-bold text-slate-900">Job Details (Optional)</h3>
                                 </div>
                                 
-                                <div className="flex flex-col md:flex-row gap-4 w-full">
-                                    <div className="flex flex-col gap-2 flex-1 min-w-0">
-                                        <label htmlFor="company-name" className="block text-sm font-semibold text-slate-700">
+                                <div className="flex flex-col md:flex-row gap-3 sm:gap-4 w-full">
+                                    <div className="flex flex-col gap-1.5 sm:gap-2 flex-1 min-w-0">
+                                        <label htmlFor="company-name" className="block text-xs sm:text-sm font-semibold text-slate-700">
                                             Company Name
                                         </label>
                                         <input 
@@ -185,12 +185,12 @@ const Upload = () => {
                                             name="company-name" 
                                             placeholder="e.g., Google, Microsoft" 
                                             id="company-name"
-                                            className="w-full px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-base"
+                                            className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-50 border-2 border-slate-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                                         />
                                     </div>
                                     
-                                    <div className="flex flex-col gap-2 flex-1 min-w-0">
-                                        <label htmlFor="job-title" className="block text-sm font-semibold text-slate-700">
+                                    <div className="flex flex-col gap-1.5 sm:gap-2 flex-1 min-w-0">
+                                        <label htmlFor="job-title" className="block text-xs sm:text-sm font-semibold text-slate-700">
                                             Job Title
                                         </label>
                                         <input 
@@ -198,21 +198,21 @@ const Upload = () => {
                                             name="job-title" 
                                             placeholder="e.g., Software Engineer" 
                                             id="job-title"
-                                            className="w-full px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-base"
+                                            className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-50 border-2 border-slate-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                                         />
                                     </div>
                                 </div>
                                 
-                                <div className="flex flex-col gap-2 w-full">
-                                    <label htmlFor="job-description" className="block text-sm font-semibold text-slate-700">
+                                <div className="flex flex-col gap-1.5 sm:gap-2 w-full">
+                                    <label htmlFor="job-description" className="block text-xs sm:text-sm font-semibold text-slate-700">
                                         Job Description
                                     </label>
                                     <textarea 
-                                        rows={5} 
+                                        rows={4} 
                                         name="job-description" 
                                         placeholder="Paste the job description here for more tailored feedback..." 
                                         id="job-description"
-                                        className="w-full px-4 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none text-base"
+                                        className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-50 border-2 border-slate-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none text-sm sm:text-base"
                                     />
                                 </div>
                             </div>
@@ -220,14 +220,14 @@ const Upload = () => {
                             
 
                             {/* Resume Upload Section */}
-                            <div className="flex flex-col gap-4 w-full">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-slate-900">Upload Resume</h3>
+                                    <h3 className="text-lg sm:text-2xl font-bold text-slate-900">Upload Resume</h3>
                                 </div>
                                 
                                 <FileUploader onFileSelect={handleFileSelect} />
@@ -235,45 +235,45 @@ const Upload = () => {
 
                             {/* Submit Button */}
                             <button 
-                                className="w-full mt-8 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2" 
+                                className="w-full mt-4 sm:mt-8 px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2" 
                                 type="submit"
                                 disabled={!file}
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                 </svg>
                                 <span>Analyze Resume with AI</span>
                             </button>
 
                             {/* Privacy & Tips */}
-                            <div className="mt-6 space-y-3">
+                            <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
                                 {/* Privacy Notice - Different message based on auth status */}
                                 {!auth.isAuthenticated ? (
-                                    <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded-xl flex items-start gap-3">
+                                    <div className="p-3 sm:p-4 bg-purple-50 border-2 border-purple-200 rounded-lg sm:rounded-xl flex items-start gap-2 sm:gap-3">
                                         <div className="flex-shrink-0">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                                 </svg>
                                             </div>
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-semibold text-purple-900 mb-1">Secure & Private Analysis</p>
-                                            <p className="text-xs text-purple-700 leading-relaxed">You'll be asked to sign in with Puter when analyzing—your data stays encrypted and under your control.</p>
+                                            <p className="text-xs sm:text-sm font-semibold text-purple-900 mb-0.5 sm:mb-1">Secure & Private Analysis</p>
+                                            <p className="text-[11px] sm:text-xs text-purple-700 leading-relaxed">You'll be asked to sign in with Puter when analyzing—your data stays encrypted and under your control.</p>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl flex items-start gap-3">
+                                    <div className="p-3 sm:p-4 bg-green-50 border-2 border-green-200 rounded-lg sm:rounded-xl flex items-start gap-2 sm:gap-3">
                                         <div className="flex-shrink-0">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                                 </svg>
                                             </div>
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-semibold text-green-900 mb-1">Your Data is Protected</p>
-                                            <p className="text-xs text-green-700 leading-relaxed">All your resume data is encrypted end-to-end and stored securely. Only you have access to your files and analysis results.</p>
+                                            <p className="text-xs sm:text-sm font-semibold text-green-900 mb-0.5 sm:mb-1">Your Data is Protected</p>
+                                            <p className="text-[11px] sm:text-xs text-green-700 leading-relaxed">All your resume data is encrypted end-to-end and stored securely. Only you have access to your files and analysis results.</p>
                                         </div>
                                     </div>
                                 )}
