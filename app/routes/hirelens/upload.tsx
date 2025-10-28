@@ -155,53 +155,110 @@ const Upload = () => {
                                         </div>
                                     </div>
                                     
-                                    {/* Processing Steps Info */}
-                                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-200">
-                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-4">What's Happening:</h3>
-                                        <div className="space-y-3">
-                                            <div className={`flex items-center gap-3 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
-                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 40 ? 'bg-green-500' : 'bg-purple-500'}`}>
-                                                    {progress >= 40 ? (
-                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                        </svg>
-                                                    ) : (
-                                                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-xs sm:text-sm font-semibold text-slate-900">Uploading & Converting</p>
-                                                    <p className="text-xs text-slate-600">Securely uploading your resume</p>
+                                    {/* Processing Steps Info - Enhanced */}
+                                    <div className="bg-gradient-to-br from-purple-50 via-white to-pink-50 rounded-2xl p-6 shadow-xl border border-purple-100">
+                                        <div className="flex items-center gap-2 mb-5">
+                                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600">
+                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-base sm:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">What's Happening</h3>
+                                        </div>
+                                        
+                                        <div className="space-y-4">
+                                            {/* Step 1 */}
+                                            <div className={`relative transition-all duration-500 ${progress >= 10 ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-2'}`}>
+                                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 40 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'}`}>
+                                                        {progress >= 40 ? (
+                                                            <svg className="w-5 h-5 text-white animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        ) : progress >= 10 ? (
+                                                            <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                                                        ) : (
+                                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm sm:text-base font-bold text-slate-900 mb-1">Uploading & Converting</p>
+                                                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">Securely uploading your resume and converting it to image format</p>
+                                                        {progress >= 10 && progress < 40 && (
+                                                            <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-medium">
+                                                                <div className="flex gap-1">
+                                                                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"></div>
+                                                                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                                                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                                                </div>
+                                                                <span>In Progress</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className={`flex items-center gap-3 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
-                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 90 ? 'bg-green-500' : 'bg-purple-500'}`}>
-                                                    {progress >= 90 ? (
-                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                        </svg>
-                                                    ) : (
-                                                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-xs sm:text-sm font-semibold text-slate-900">AI Analysis</p>
-                                                    <p className="text-xs text-slate-600">Analyzing your resume with AI</p>
+
+                                            {/* Step 2 */}
+                                            <div className={`relative transition-all duration-500 ${progress >= 70 ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-2'}`}>
+                                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 90 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'}`}>
+                                                        {progress >= 90 ? (
+                                                            <svg className="w-5 h-5 text-white animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        ) : progress >= 70 ? (
+                                                            <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                                                        ) : (
+                                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm sm:text-base font-bold text-slate-900 mb-1">AI Analysis</p>
+                                                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">Our AI is analyzing your resume for ATS compatibility and improvements</p>
+                                                        {progress >= 70 && progress < 90 && (
+                                                            <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-medium">
+                                                                <div className="flex gap-1">
+                                                                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"></div>
+                                                                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                                                    <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                                                </div>
+                                                                <span>In Progress</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className={`flex items-center gap-3 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
-                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${progress >= 100 ? 'bg-green-500' : 'bg-purple-500'}`}>
-                                                    {progress >= 100 ? (
-                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                        </svg>
-                                                    ) : (
-                                                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-xs sm:text-sm font-semibold text-slate-900">Finalizing</p>
-                                                    <p className="text-xs text-slate-600">Preparing your results</p>
+
+                                            {/* Step 3 */}
+                                            <div className={`relative transition-all duration-500 ${progress >= 100 ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-2'}`}>
+                                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-shadow">
+                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 100 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'}`}>
+                                                        {progress >= 100 ? (
+                                                            <svg className="w-5 h-5 text-white animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        ) : (
+                                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm sm:text-base font-bold text-slate-900 mb-1">Finalizing Results</p>
+                                                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">Preparing your personalized feedback and recommendations</p>
+                                                        {progress >= 100 && (
+                                                            <div className="mt-2 flex items-center gap-2 text-xs text-green-600 font-medium">
+                                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                </svg>
+                                                                <span>Complete!</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
