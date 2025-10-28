@@ -364,6 +364,14 @@ export default function Home() {
 
   const handleDeleteResume = async (id: string) => {
     try {
+      // Check if kv is available
+      if (!kv || typeof kv.delete !== 'function') {
+        console.error("KV store not available or delete method missing");
+        // Still update UI even if KV fails
+        setResumes(prevResumes => prevResumes.filter(resume => resume.id !== id));
+        return;
+      }
+      
       // Delete from KV store
       await kv.delete(`resume:${id}`);
       
@@ -371,6 +379,8 @@ export default function Home() {
       setResumes(prevResumes => prevResumes.filter(resume => resume.id !== id));
     } catch (error) {
       console.error("Error deleting resume from KV store:", error);
+      // Still update UI even if KV fails
+      setResumes(prevResumes => prevResumes.filter(resume => resume.id !== id));
     }
   };
 
