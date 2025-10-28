@@ -26,59 +26,102 @@ const Upload = () => {
             return;
         }
 
+        // Validate file type
+        if (file.type !== 'application/pdf') {
+            alert('Please upload a PDF resume file. We currently only support PDF format for accurate analysis.');
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size too large. Please upload a resume under 10MB.');
+            return;
+        }
+
         setIsProcessing(true);
         setProgress(0);
 
-        setStatusText('Uploading the file...');
-        setProgress(10);
-        const uploadedFile = await fs.upload([file]);
-        if(!uploadedFile) return setStatusText('Error: Failed to upload file');
+        try {
+            setStatusText('Uploading the file...');
+            setProgress(10);
+            const uploadedFile = await fs.upload([file]);
+            if(!uploadedFile) {
+                setStatusText('Error: Failed to upload file');
+                setIsProcessing(false);
+                return;
+            }
 
-        setStatusText('Converting to image...');
-        setProgress(25);
-        const imageFile = await convertPdfToImage(file);
-        if(!imageFile.file) return setStatusText('Error: Failed to convert PDF to image');
+            setStatusText('Converting to image...');
+            setProgress(25);
+            const imageFile = await convertPdfToImage(file);
+            if(!imageFile.file) {
+                setStatusText('Error: Failed to convert PDF to image');
+                setIsProcessing(false);
+                return;
+            }
 
-        setStatusText('Uploading the image...');
-        setProgress(40);
-        const uploadedImage = await fs.upload([imageFile.file]);
-        if(!uploadedImage) return setStatusText('Error: Failed to upload image');
+            setStatusText('Uploading the image...');
+            setProgress(40);
+            const uploadedImage = await fs.upload([imageFile.file]);
+            if(!uploadedImage) {
+                setStatusText('Error: Failed to upload image');
+                setIsProcessing(false);
+                return;
+            }
 
-        setStatusText('Preparing data...');
-        setProgress(55);
-        const uuid = generateUUID();
-        const data = {
-            id: uuid,
-            resumePath: uploadedFile.path,
-            imagePath: uploadedImage.path,
-            companyName, jobTitle, jobDescription,
-            feedback: '',
+            setStatusText('Preparing data...');
+            setProgress(55);
+            const uuid = generateUUID();
+            const data = {
+                id: uuid,
+                resumePath: uploadedFile.path,
+                imagePath: uploadedImage.path,
+                companyName, jobTitle, jobDescription,
+                feedback: '',
+            }
+            await kv.set(`resume:${uuid}`, JSON.stringify(data));
+
+            setStatusText('Analyzing with AI...');
+            setProgress(70);
+
+            const feedback = await ai.feedback(
+                uploadedFile.path,
+                prepareInstructions({ jobTitle, jobDescription })
+            );
+            
+            if (!feedback) {
+                setStatusText('Error: AI analysis failed. Please try again.');
+                setIsProcessing(false);
+                return;
+            }
+
+            setProgress(90);
+            const feedbackText = typeof feedback.message.content === 'string'
+                ? feedback.message.content
+                : feedback.message.content[0].text;
+
+            try {
+                data.feedback = JSON.parse(feedbackText);
+            } catch (parseError) {
+                console.error('Failed to parse AI feedback:', parseError);
+                setStatusText('Error: Invalid AI response. Please try again.');
+                setIsProcessing(false);
+                return;
+            }
+
+            await kv.set(`resume:${uuid}`, JSON.stringify(data));
+            setStatusText('Analysis complete, redirecting...');
+            setProgress(100);
+            console.log(data);
+            
+            setTimeout(() => {
+                navigate(`/hirelens/resume/${uuid}`);
+            }, 500);
+        } catch (error) {
+            console.error('Error during analysis:', error);
+            setStatusText('Error: Something went wrong. Please try again.');
+            setIsProcessing(false);
         }
-        await kv.set(`resume:${uuid}`, JSON.stringify(data));
-
-        setStatusText('Analyzing...');
-        setProgress(70);
-
-        const feedback = await ai.feedback(
-            uploadedFile.path,
-            prepareInstructions({ jobTitle, jobDescription })
-        )
-        if (!feedback) return setStatusText('Error: Failed to analyze resume');
-
-        setProgress(90);
-        const feedbackText = typeof feedback.message.content === 'string'
-            ? feedback.message.content
-            : feedback.message.content[0].text;
-
-        data.feedback = JSON.parse(feedbackText);
-        await kv.set(`resume:${uuid}`, JSON.stringify(data));
-        setStatusText('Analysis complete, redirecting...');
-        setProgress(100);
-        console.log(data);
-        
-        setTimeout(() => {
-            navigate(`/hirelens/resume/${uuid}`);
-        }, 500);
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -109,7 +152,7 @@ const Upload = () => {
                         Step 1 of 2
                     </div>
                     
-                    <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 mb-3 sm:mb-4 px-2">
+                    <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 mb-6 sm:mb-8 px-2">
                         Upload Your{" "}
                         <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
                             Resume
@@ -117,26 +160,26 @@ const Upload = () => {
                     </h1>
                     
                     {isProcessing ? (
-                        <div className="max-w-6xl mx-auto">
-                            <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-center">
+                        <div className="max-w-6xl mx-auto mt-8 sm:mt-12">
+                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
                                 {/* Left Side - Progress */}
-                                <div className="space-y-4 sm:space-y-6">
-                                    <div className="flex items-center gap-2 sm:gap-3">
-                                        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-3 sm:border-4 border-purple-600 border-t-transparent"></div>
-                                        <h2 className="text-lg sm:text-2xl text-purple-600 font-semibold">{statusText}</h2>
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
+                                        <h2 className="text-2xl text-purple-600 font-semibold">{statusText}</h2>
                                     </div>
                                     
                                     {/* Progress Bar */}
-                                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border-2 border-purple-200">
-                                        <div className="flex items-center justify-between mb-2 sm:mb-3">
-                                            <span className="text-xs sm:text-sm font-semibold text-slate-700">Processing Progress</span>
-                                            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-purple-200">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-sm font-semibold text-slate-700">Processing Progress</span>
+                                            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                                 {progress}%
                                             </span>
                                         </div>
                                         
                                         {/* Progress Bar Track */}
-                                        <div className="w-full h-3 sm:h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                                        <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
                                             <div 
                                                 className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-full transition-all duration-500 ease-out shadow-lg relative"
                                                 style={{ width: `${progress}%` }}
@@ -147,7 +190,7 @@ const Upload = () => {
                                         </div>
                                         
                                         {/* Progress Steps */}
-                                        <div className="mt-3 sm:mt-4 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
+                                        <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
                                             <span className={progress >= 10 ? 'text-purple-600 font-semibold' : ''}>Upload</span>
                                             <span className={progress >= 40 ? 'text-purple-600 font-semibold' : ''}>Convert</span>
                                             <span className={progress >= 70 ? 'text-purple-600 font-semibold' : ''}>Analyze</span>
@@ -157,37 +200,27 @@ const Upload = () => {
                                     
                                     {/* Processing Steps Info - Single Card */}
                                     <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-200">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg">
-                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                </svg>
-                                            </div>
-                                            <h3 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">What's Happening</h3>
-                                        </div>
                                         
-                                        {/* Divider */}
-                                        <div className="border-t border-slate-200 mb-5"></div>
                                         
                                         <div className="space-y-3">
                                             {/* Step 1 */}
-                                            <div className={`flex items-center gap-4 transition-all duration-500 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
-                                                <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 40 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
+                                            <div className={`flex items-start gap-3 transition-all duration-500 ${progress >= 10 ? 'opacity-100' : 'opacity-40'}`}>
+                                                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-500 ${progress >= 40 ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
                                                     {progress >= 40 ? (
                                                         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                         </svg>
                                                     ) : progress >= 10 ? (
-                                                        <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                                                        <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
                                                     ) : (
-                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                         </svg>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0 pt-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm sm:text-base font-semibold text-slate-900">Uploading & Converting</p>
+                                                        <p className="text-sm font-semibold text-slate-900">Uploading & Converting</p>
                                                         {progress >= 10 && progress < 40 && (
                                                             <div className="flex items-center gap-1.5">
                                                                 <div className="flex gap-1">
@@ -205,26 +238,26 @@ const Upload = () => {
                                             </div>
 
                                             {/* Connecting Line */}
-                                            <div className={`ml-5 border-l-2 h-3 transition-colors duration-500 ${progress >= 40 ? 'border-green-500' : progress >= 10 ? 'border-purple-500' : 'border-slate-300'}`}></div>
+                                            <div className={`ml-4 border-l-2 h-2 transition-colors duration-500 ${progress >= 40 ? 'border-green-500' : progress >= 10 ? 'border-purple-500' : 'border-slate-300'}`}></div>
 
                                             {/* Step 2 */}
-                                            <div className={`flex items-center gap-4 transition-all duration-500 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
-                                                <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 90 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
+                                            <div className={`flex items-start gap-3 transition-all duration-500 ${progress >= 70 ? 'opacity-100' : 'opacity-40'}`}>
+                                                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-500 ${progress >= 90 ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
                                                     {progress >= 90 ? (
                                                         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                         </svg>
                                                     ) : progress >= 70 ? (
-                                                        <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                                                        <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
                                                     ) : (
-                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                                         </svg>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0 pt-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm sm:text-base font-semibold text-slate-900">AI Analysis</p>
+                                                        <p className="text-sm font-semibold text-slate-900">AI Analysis</p>
                                                         {progress >= 70 && progress < 90 && (
                                                             <div className="flex items-center gap-1.5">
                                                                 <div className="flex gap-1">
@@ -242,24 +275,24 @@ const Upload = () => {
                                             </div>
 
                                             {/* Connecting Line */}
-                                            <div className={`ml-5 border-l-2 h-3 transition-colors duration-500 ${progress >= 90 ? 'border-green-500' : progress >= 70 ? 'border-purple-500' : 'border-slate-300'}`}></div>
+                                            <div className={`ml-4 border-l-2 h-2 transition-colors duration-500 ${progress >= 90 ? 'border-green-500' : progress >= 70 ? 'border-purple-500' : 'border-slate-300'}`}></div>
 
                                             {/* Step 3 */}
-                                            <div className={`flex items-center gap-4 transition-all duration-500 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
-                                                <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${progress >= 100 ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
+                                            <div className={`flex items-start gap-3 transition-all duration-500 ${progress >= 100 ? 'opacity-100' : 'opacity-40'}`}>
+                                                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-500 ${progress >= 100 ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-purple-500 to-purple-600'} shadow-md`}>
                                                     {progress >= 100 ? (
                                                         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                         </svg>
                                                     ) : (
-                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0 pt-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm sm:text-base font-semibold text-slate-900">Finalizing Results</p>
+                                                        <p className="text-sm font-semibold text-slate-900">Finalizing Results</p>
                                                         {progress >= 100 && (
                                                             <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
                                                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
