@@ -265,7 +265,7 @@ const PrivacyBox = () => (
   </section>
 );
 
-const ResumeGrid = ({ resumes, loading, onDelete }: { resumes: Resume[]; loading: boolean; onDelete: (id: string) => void }) => {
+const ResumeGrid = ({ resumes, loading }: { resumes: Resume[]; loading: boolean }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -314,7 +314,7 @@ const ResumeGrid = ({ resumes, loading, onDelete }: { resumes: Resume[]; loading
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-10 text-center">Your Recent Resumes</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {resumes.map((resume) => (
-            <ResumeCard key={resume.id} resume={resume} onDelete={onDelete} />
+            <ResumeCard key={resume.id} resume={resume} />
           ))}
         </div>
       </div>
@@ -362,45 +362,12 @@ export default function Home() {
     loadResumes();
   }, [auth.isAuthenticated]);
 
-  const handleDeleteResume = async (id: string) => {
-    console.log("🗑️ Deleting resume with ID:", id);
-    console.log("🔑 KV store available:", !!kv);
-    console.log("🔧 KV delete function type:", typeof kv?.delete);
-    
-    try {
-      // Check if kv is available
-      if (!kv || typeof kv.delete !== 'function') {
-        console.error("❌ KV store not available or delete method missing");
-        console.error("KV object:", kv);
-        // Still update UI even if KV fails
-        setResumes(prevResumes => prevResumes.filter(resume => resume.id !== id));
-        return;
-      }
-      
-      // Delete from KV store
-      console.log("🔄 Calling kv.delete for key:", `resume:${id}`);
-      const deleteResult = await kv.delete(`resume:${id}`);
-      console.log("✅ KV delete result:", deleteResult);
-      
-      // Update local state
-      setResumes(prevResumes => {
-        const filtered = prevResumes.filter(resume => resume.id !== id);
-        console.log("📊 Resumes after filter:", filtered.length);
-        return filtered;
-      });
-    } catch (error) {
-      console.error("❌ Error deleting resume from KV store:", error);
-      // Still update UI even if KV fails
-      setResumes(prevResumes => prevResumes.filter(resume => resume.id !== id));
-    }
-  };
-
   return (
     // Apply bg-white to the root element to cover the navbar area too
     <div className="min-h-screen bg-white">
       <Navbar />
         <Hero />
-        <ResumeGrid resumes={resumes} loading={loadingResumes} onDelete={handleDeleteResume} />
+        <ResumeGrid resumes={resumes} loading={loadingResumes} />
         <HowItWorks />
         <PrivacyBox />
     </div>
