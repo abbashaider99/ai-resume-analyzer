@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
+import Toast from "~/components/Toast";
 import { usePuterStore } from "~/lib/puter";
 
 export const meta = () => ([
@@ -10,12 +11,48 @@ export const meta = () => ([
 const Auth = () => {
     const { isLoading, auth } = usePuterStore();
     const location = useLocation();
-    const next = location.search.split('next=')[1];
+    const next = location.search.split('next=')[1] || '/hirelens';
     const navigate = useNavigate();
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [signingIn, setSigningIn] = useState(false);
+    const [autoRedirected, setAutoRedirected] = useState(false);
 
     useEffect(() => {
-        if(auth.isAuthenticated) navigate(next);
-    }, [auth.isAuthenticated, next])
+        if (auth.isAuthenticated && !signingIn) {
+            // Already authenticated, redirect immediately
+            navigate(next);
+        }
+    }, [auth.isAuthenticated, next, navigate, signingIn]);
+
+    // Auto-redirect to Puter sign-in when coming from upload page
+    useEffect(() => {
+        if (!auth.isAuthenticated && !isLoading && !signingIn && !autoRedirected) {
+            const isFromUpload = next.includes('/hirelens/upload');
+            if (isFromUpload) {
+                setAutoRedirected(true);
+                handleSignIn();
+            }
+        }
+    }, [auth.isAuthenticated, isLoading, signingIn, autoRedirected, next]);
+
+    const handleSignIn = async () => {
+        setSigningIn(true);
+        try {
+            await auth.signIn();
+            // Show success toast
+            setToastMessage('Successfully signed in!');
+            setShowToast(true);
+            // Redirect after a short delay to show toast
+            setTimeout(() => {
+                navigate(next);
+            }, 1000);
+        } catch (error) {
+            setSigningIn(false);
+            setToastMessage('Sign in failed. Please try again.');
+            setShowToast(true);
+        }
+    };
 
     return (
         <main className="bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 min-h-screen flex items-center justify-center px-4 py-8">
@@ -72,7 +109,7 @@ const Auth = () => {
 
                     {/* Sign In Button */}
                     <div className="space-y-4">
-                        {isLoading ? (
+                        {isLoading || signingIn ? (
                             <button 
                                 disabled
                                 className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg opacity-75 flex items-center justify-center gap-2"
@@ -81,29 +118,15 @@ const Auth = () => {
                                 <span>Signing in...</span>
                             </button>
                         ) : (
-                            <>
-                                {auth.isAuthenticated ? (
-                                    <button 
-                                        onClick={auth.signOut}
-                                        className="w-full px-6 py-3.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                        </svg>
-                                        <span>Sign Out</span>
-                                    </button>
-                                ) : (
-                                    <button 
-                                        onClick={auth.signIn}
-                                        className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 group"
-                                    >
-                                        <svg className="w-5 h-5 transition-transform group-hover:translate-x-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                        </svg>
-                                        <span>Sign In with Puter</span>
-                                    </button>
-                                )}
-                            </>
+                            <button 
+                                onClick={handleSignIn}
+                                className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 group"
+                            >
+                                <svg className="w-5 h-5 transition-transform group-hover:translate-x-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                </svg>
+                                <span>Sign In with Puter</span>
+                            </button>
                         )}
 
                         {/* Info Text */}
@@ -119,6 +142,15 @@ const Auth = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Toast Notification */}
+            {showToast && (
+                <Toast
+                    message={toastMessage}
+                    type="success"
+                    onClose={() => setShowToast(false)}
+                />
+            )}
         </main>
     )
 }

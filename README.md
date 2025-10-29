@@ -1,6 +1,8 @@
-# Abbas Logic
+# Abbas Logic - abbaslogic.com
 
 A collection of powerful AI-powered tools designed to boost productivity and help you achieve more.
+
+**Production Website:** [https://abbaslogic.com](https://abbaslogic.com)
 
 ## 🚀 Tools
 
@@ -19,6 +21,8 @@ AI-powered resume analyzer that helps you optimize your resume for ATS systems a
   - Skills Assessment
 - 💡 Actionable tips and suggestions
 - 🔒 Privacy-focused (uses Puter.js cloud storage)
+- 👥 User authentication and resume history
+- 🔐 Secure admin panel for user management
 
 **Access:** `/hirelens`
 
@@ -27,6 +31,8 @@ AI-powered resume analyzer that helps you optimize your resume for ATS systems a
 ## 🛠️ Tech Stack
 
 - **Frontend:** React 19 with React Router v7
+- **Backend:** Express.js + MongoDB Atlas
+- **Database:** MongoDB (Production: abbaslogicdb)
 - **Styling:** Tailwind CSS v4
 - **Build Tool:** Vite 6
 - **Language:** TypeScript 5
@@ -34,6 +40,15 @@ AI-powered resume analyzer that helps you optimize your resume for ATS systems a
 - **Cloud Platform:** Puter.js (Auth, Storage, AI, KV Store)
 - **PDF Processing:** pdfjs-dist
 - **File Upload:** react-dropzone
+- **Security:** bcryptjs for password hashing
+
+## 🌐 Production Setup
+
+**Domain:** abbaslogic.com
+**Database:** MongoDB Atlas
+**API Endpoint:** api.abbaslogic.com
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ## 📦 Installation
 
@@ -41,13 +56,14 @@ AI-powered resume analyzer that helps you optimize your resume for ATS systems a
 # Install dependencies
 npm install
 
-# Run development server
+# Install server dependencies
+cd server && npm install && cd ..
+
+# Run development server (frontend)
 npm run dev
 
-# Build for production
-npm run build
-
-# Start production server
+# Run development server (backend)
+cd server && npm run dev
 npm start
 ```
 

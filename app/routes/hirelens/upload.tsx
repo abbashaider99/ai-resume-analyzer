@@ -2,12 +2,19 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from "react-router";
 import FileUploader from "~/components/FileUploader";
 import Navbar from "~/components/Navbar";
+import {
+    checkUsageLimit,
+    incrementUsageCount,
+    saveResumeToMongoDB,
+    syncUserToMongoDB
+} from "~/lib/db";
 import { convertPdfToImage } from "~/lib/pdf2img";
 import { usePuterStore } from "~/lib/puter";
 import { generateUUID } from "~/lib/utils";
 import { prepareInstructions } from "../../../constants";
 
-const FREE_PLAN_LIMIT = 5;
+// Default free plan limit - can be overridden by admin settings
+const DEFAULT_FREE_PLAN_LIMIT = 3;
 
 const Upload = () => {
     const { auth, isLoading, fs, ai, kv } = usePuterStore();
@@ -19,39 +26,61 @@ const Upload = () => {
     const [showNotResumeModal, setShowNotResumeModal] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [usageCount, setUsageCount] = useState(0);
+    const [maxUsage, setMaxUsage] = useState(DEFAULT_FREE_PLAN_LIMIT);
+    const [userPlan, setUserPlan] = useState('free');
 
     const handleFileSelect = (file: File | null) => {
         setFile(file)
     }
 
-    // Check usage count on component mount
+    // Check usage count on component mount and sync user to MongoDB
     useEffect(() => {
         const checkUsage = async () => {
-            if (!auth.isAuthenticated) return;
+            if (!auth.isAuthenticated || !auth.user) return;
             
             try {
-                const usageData = await kv.get('resume_usage_count');
-                const count = usageData ? parseInt(usageData) : 0;
-                setUsageCount(count);
+                // Sync user to MongoDB
+                await syncUserToMongoDB(auth.user);
+                
+                // Get usage data from MongoDB
+                const usageData = await checkUsageLimit(auth.user.uuid);
+                setUsageCount(usageData.currentUsage);
+                setMaxUsage(usageData.maxUsage);
+                setUserPlan(usageData.plan);
             } catch (error) {
-                console.error('Failed to get usage count:', error);
+                console.error('Failed to sync user or get usage count:', error);
+                // Fallback to Puter KV if MongoDB fails
+                try {
+                    const usageData = await kv.get('resume_usage_count');
+                    const count = usageData ? parseInt(usageData) : 0;
+                    setUsageCount(count);
+                } catch (kvError) {
+                    console.error('Fallback KV also failed:', kvError);
+                }
             }
         };
         
         checkUsage();
-    }, [auth.isAuthenticated, kv]);
+    }, [auth.isAuthenticated, auth.user, kv]);
 
     const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
-        // Check if user is authenticated before proceeding
-        if (!auth.isAuthenticated) {
-            navigate(`/hirelens/auth?next=/hirelens/upload`);
-            return;
-        }
-
-        // Check usage limit
-        if (usageCount >= FREE_PLAN_LIMIT) {
-            setShowUpgradeModal(true);
-            return;
+        // For authenticated users, check usage limit
+        if (auth.isAuthenticated && auth.user) {
+            // Check usage limit from MongoDB
+            try {
+                const usageData = await checkUsageLimit(auth.user.uuid);
+                if (!usageData.canAnalyze) {
+                    setShowUpgradeModal(true);
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to check usage limit:', error);
+                // Fallback to local check
+                if (usageCount >= maxUsage) {
+                    setShowUpgradeModal(true);
+                    return;
+                }
+            }
         }
 
         // Validate file type
@@ -121,17 +150,17 @@ const Upload = () => {
             console.log('AI feedback received:', feedback);
             
             if (!feedback) {
-                setStatusText('Error: AI analysis failed. Please try again.');
+                setStatusText('');
                 setIsProcessing(false);
-                alert('AI analysis failed. Please ensure you uploaded a valid resume PDF and try again.');
+                setShowNotResumeModal(true);
                 return;
             }
 
             if (!feedback.message || !feedback.message.content) {
                 console.error('Invalid feedback structure:', feedback);
-                setStatusText('Error: Invalid AI response format.');
+                setStatusText('');
                 setIsProcessing(false);
-                alert('Received invalid response from AI. Please try again.');
+                setShowNotResumeModal(true);
                 return;
             }
 
@@ -161,20 +190,42 @@ const Upload = () => {
             } catch (parseError) {
                 console.error('Failed to parse AI feedback:', parseError);
                 console.error('Raw feedback text:', feedbackText);
-                setStatusText('Error: Invalid AI response format.');
+                setStatusText('');
                 setIsProcessing(false);
-                alert('Failed to process AI response. Please try again or contact support.');
+                setShowNotResumeModal(true);
                 return;
             }
 
             setStatusText('Saving results...');
             setProgress(95);
             
-            // Increment usage count
-            const newUsageCount = usageCount + 1;
-            await kv.set('resume_usage_count', newUsageCount.toString());
-            setUsageCount(newUsageCount);
+            // Increment usage count in MongoDB
+            try {
+                await incrementUsageCount(auth.user!.uuid);
+                const newUsageCount = usageCount + 1;
+                setUsageCount(newUsageCount);
+                
+                // Also save to MongoDB
+                await saveResumeToMongoDB({
+                    id: uuid,
+                    puterId: auth.user!.uuid,
+                    companyName,
+                    jobTitle,
+                    jobDescription,
+                    resumePath: uploadedFile.path,
+                    imagePath: uploadedImage.path,
+                    feedback: data.feedback,
+                });
+                console.log('✅ Resume saved to MongoDB');
+            } catch (mongoError) {
+                console.error('MongoDB save failed, falling back to Puter KV:', mongoError);
+                // Fallback to Puter KV
+                const newUsageCount = usageCount + 1;
+                await kv.set('resume_usage_count', newUsageCount.toString());
+                setUsageCount(newUsageCount);
+            }
             
+            // Also keep in Puter KV for redundancy
             await kv.set(`resume:${uuid}`, JSON.stringify(data));
             
             setStatusText('Complete! Redirecting...');
@@ -393,7 +444,301 @@ const Upload = () => {
                     )}
                 </div>
 
-                {!isProcessing && (
+                {!isProcessing && usageCount >= maxUsage && maxUsage !== -1 ? (
+                    // Show upgrade card instead of upload form when limit is reached
+                    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-8 lg:p-10">
+                        <div className="flex flex-col items-center text-center space-y-6">
+                            {/* Icon */}
+                            <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                                <svg className="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-3xl sm:text-4xl font-bold text-slate-900">
+                                Free Limit Reached
+                            </h3>
+
+                            {/* Message */}
+                            <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
+                                You've analyzed <span className="font-bold text-purple-600">{maxUsage} resumes</span> with your free plan. Upgrade now to unlock unlimited analyses and advanced features!
+                            </p>
+
+                            {/* Features List */}
+                            <div className="w-full max-w-lg bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 space-y-4 text-left border-2 border-purple-200">
+                                <p className="text-sm font-bold text-purple-900 uppercase tracking-wide flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    Pro Plan Includes:
+                                </p>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-base text-slate-700"><strong className="text-purple-900">Unlimited</strong> resume analyses per month</span>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-base text-slate-700"><strong className="text-purple-900">Priority</strong> AI processing speed</span>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-base text-slate-700"><strong className="text-purple-900">Advanced</strong> ATS optimization insights</span>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-base text-slate-700"><strong className="text-purple-900">Save & compare</strong> unlimited resume versions</span>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-base text-slate-700"><strong className="text-purple-900">Exclusive</strong> career tips & templates</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Pricing & CTA */}
+                            <div className="w-full max-w-lg space-y-4">
+                                <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Pro Plan</p>
+                                        <p className="text-3xl font-bold text-slate-900">$9.99<span className="text-lg text-slate-600 font-normal">/month</span></p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-green-600 font-semibold">SAVE 60%</p>
+                                        <p className="text-sm text-slate-500 line-through">$24.99/mo</p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Upgrade to Pro Now
+                                </button>
+                                
+                                <p className="text-xs text-slate-500 text-center">
+                                    Cancel anytime • 30-day money-back guarantee • Instant access
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ) : !isProcessing && usageCount >= maxUsage ? (
+                    /* Upgrade Card when limit reached */
+                    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-purple-200 p-6 sm:p-10 lg:p-12">
+                        <div className="max-w-3xl mx-auto text-center space-y-6">
+                            {/* Icon */}
+                            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full">
+                                <svg className="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <div>
+                                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+                                    You've Reached Your Free Limit
+                                </h2>
+                                <p className="text-lg text-slate-600">
+                                    You've analyzed <span className="font-bold text-purple-600">{usageCount}/{maxUsage}</span> resumes on the free plan
+                                </p>
+                            </div>
+
+                            {/* Benefits */}
+                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 space-y-4">
+                                <h3 className="text-xl font-bold text-slate-900 mb-4">Upgrade to Pro and Get:</h3>
+                                <div className="grid sm:grid-cols-2 gap-4 text-left">
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-semibold text-slate-900">Unlimited Analyses</p>
+                                            <p className="text-sm text-slate-600">Analyze as many resumes as you need</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-semibold text-slate-900">Priority Support</p>
+                                            <p className="text-sm text-slate-600">Get help when you need it</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-semibold text-slate-900">Advanced Features</p>
+                                            <p className="text-sm text-slate-600">Access exclusive tools & insights</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-semibold text-slate-900">Resume Templates</p>
+                                            <p className="text-sm text-slate-600">Professional templates included</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Pricing */}
+                            <div className="bg-white rounded-xl border-2 border-purple-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Pro Plan</p>
+                                        <p className="text-4xl font-bold text-slate-900">$9.99<span className="text-lg text-slate-600 font-normal">/month</span></p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-green-600 font-bold">SAVE 60%</p>
+                                        <p className="text-base text-slate-500 line-through">$24.99/mo</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => navigate('/pricing')}
+                                    className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Upgrade to Pro Now
+                                </button>
+                            </div>
+
+                            {/* Trust Badges */}
+                            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500 pt-4">
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Cancel anytime
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    30-day money-back guarantee
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Instant access
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : !isProcessing && !auth.isAuthenticated ? (
+                    // Login/Signup Card for unauthenticated users
+                    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-purple-200 p-6 sm:p-10 lg:p-12">
+                        <div className="max-w-2xl mx-auto text-center space-y-6">
+                            {/* Icon */}
+                            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <div>
+                                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+                                    Sign Up to Get Started
+                                </h3>
+                                <p className="text-slate-600 text-lg">
+                                    Create an account to analyze your resume with AI-powered feedback!
+                                </p>
+                            </div>
+
+                            {/* Benefits */}
+                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 space-y-3 border-2 border-purple-200">
+                                <p className="font-bold text-purple-900 text-sm uppercase tracking-wide">With a Free Account You Get:</p>
+                                <div className="space-y-2 text-left">
+                                    <div className="flex items-center gap-3">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-slate-700"><strong>{maxUsage} resume analyses</strong> per month</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-slate-700"><strong>Save your resumes</strong> and feedback</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-slate-700"><strong>Access from anywhere</strong> - all your data synced</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <svg className="w-5 h-5 text-purple-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-slate-700"><strong>Track your progress</strong> over time</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CTA Buttons */}
+                            <div className="space-y-3 pt-4">
+                                <button
+                                    onClick={() => navigate('/hirelens/auth?next=/hirelens/upload')}
+                                    className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg rounded-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-3"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                    </svg>
+                                    Sign Up / Login to Continue
+                                </button>
+
+                                <p className="text-sm text-slate-500">
+                                    It's quick, easy, and <strong>completely free</strong>! No credit card required.
+                                </p>
+                            </div>
+
+                            {/* Trust Signals */}
+                            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500 pt-4 border-t border-slate-200">
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    100% Free Account
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    No Credit Card Needed
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Takes 30 Seconds
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : !isProcessing ? (
                     <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-8 lg:p-10">
                         <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-6 w-full">
                             {/* Job Details Section */}
@@ -514,21 +859,29 @@ const Upload = () => {
                             </div>
                         </form>
                     </div>
-                )}
+                ) : null}
 
-                {/* Usage Counter Badge - Show when authenticated and not processing */}
-                {auth.isAuthenticated && !isProcessing && (
+                {/* Usage Counter Badge - Show when authenticated and not processing and not at limit */}
+                {auth.isAuthenticated && !isProcessing && !(usageCount >= maxUsage && maxUsage !== -1) && (
                     <div className="mt-6 flex justify-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-full">
                             <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             <span className="text-sm font-semibold text-slate-700">
-                                {usageCount} / {FREE_PLAN_LIMIT} Free Analyses Used
+                                {maxUsage === -1 ? (
+                                    <>
+                                        <span className="text-purple-600">{usageCount}</span> / ∞ {userPlan === 'pro' ? 'Pro' : userPlan === 'enterprise' ? 'Enterprise' : 'Free'} Analyses
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-purple-600">{maxUsage - usageCount}</span> Remaining of {maxUsage} {userPlan === 'pro' ? 'Pro' : 'Free'} Analyses
+                                    </>
+                                )}
                             </span>
-                            {usageCount >= FREE_PLAN_LIMIT && (
-                                <span className="ml-2 px-2 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full">
-                                    Limit Reached
+                            {userPlan !== 'free' && (
+                                <span className="ml-2 px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full">
+                                    {userPlan.toUpperCase()}
                                 </span>
                             )}
                         </div>
@@ -611,7 +964,7 @@ const Upload = () => {
 
                             {/* Message */}
                             <p className="text-slate-600 leading-relaxed">
-                                You've used all <span className="font-bold text-purple-600">{FREE_PLAN_LIMIT} free resume analyses</span>. Upgrade to continue analyzing unlimited resumes with advanced AI insights!
+                                You've used all <span className="font-bold text-purple-600">{maxUsage} free resume analyses</span>. Upgrade to continue analyzing unlimited resumes with advanced AI insights!
                             </p>
 
                             {/* Features List */}
