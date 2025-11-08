@@ -14,7 +14,7 @@ const ChangePassword = () => {
 
     // Redirect if not authenticated
     if (!auth.isAuthenticated) {
-        navigate('/hirelens/auth');
+    navigate('/login');
         return null;
     }
 
@@ -48,7 +48,7 @@ const ChangePassword = () => {
             
             // Redirect to auth after 2 seconds
             setTimeout(() => {
-                window.location.href = '/hirelens/auth';
+                window.location.href = '/login';
             }, 2000);
         } catch (err) {
             setError('Failed to change password. Please try again.');

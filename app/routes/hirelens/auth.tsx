@@ -18,6 +18,13 @@ const Auth = () => {
     const [signingIn, setSigningIn] = useState(false);
     const [autoRedirected, setAutoRedirected] = useState(false);
 
+    // Redirect old path to new global login, preserving query string
+    useEffect(() => {
+        if (location.pathname.startsWith('/hirelens/auth')) {
+            navigate(`/login${location.search || ''}` , { replace: true });
+        }
+    }, [location.pathname, location.search, navigate]);
+
     useEffect(() => {
         if (auth.isAuthenticated && !signingIn) {
             // Already authenticated, redirect immediately

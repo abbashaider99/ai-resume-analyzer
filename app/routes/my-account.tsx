@@ -12,7 +12,7 @@ const MyAccount = () => {
 
     useEffect(() => {
         if (!auth.isAuthenticated || !auth.user) {
-            navigate('/hirelens/auth?next=/my-account');
+            navigate(`/login?next=/my-account`);
             return;
         }
 

@@ -117,15 +117,12 @@ const Hero = () => (
 
       {/* Main Heading */}
       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
-        Powerful AI Tools for
-        <span className="block bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mt-2">
-          Modern Professionals
-        </span>
+        Helpful tools for work
       </h1>
 
       {/* Subtitle */}
       <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-        Unlock your potential with our suite of AI-powered tools designed to boost productivity, enhance security, and improve your professional workflow.
+        Simple, useful tools to save time and get things done.
       </p>
 
       {/* CTA Buttons */}
@@ -293,10 +290,7 @@ const ToolsSection = () => (
           </span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
-          Explore Our{" "}
-          <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            AI-Powered Tools
-          </span>
+          Explore our tools
         </h2>
         <p className="text-lg text-slate-600 max-w-2xl mx-auto">
           Carefully crafted tools to help you work smarter, enhance security, and achieve your professional goals.
@@ -314,10 +308,10 @@ const ToolsSection = () => (
       <div className="mt-16">
         <div className="text-center mb-10">
           <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">
-            Why Choose Our Tools?
+            Why use these?
           </h3>
           <p className="text-base text-slate-600 max-w-2xl mx-auto">
-            Built with cutting-edge technology and designed for real-world use cases.
+            They are fast, simple and free.
           </p>
         </div>
 

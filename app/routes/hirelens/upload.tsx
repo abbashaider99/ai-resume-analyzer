@@ -47,13 +47,26 @@ const Upload = () => {
                 setUsageCount(usageData.currentUsage);
                 setMaxUsage(usageData.maxUsage);
                 setUserPlan(usageData.plan);
+                // Persist to KV for reliable fallback
+                try {
+                    await kv.set('resume_usage_count', String(usageData.currentUsage));
+                    await kv.set('resume_max_usage', String(usageData.maxUsage));
+                    await kv.set('resume_plan', String(usageData.plan));
+                } catch (e) {
+                    console.warn('KV persist failed', e);
+                }
             } catch (error) {
                 console.error('Failed to sync user or get usage count:', error);
                 // Fallback to Puter KV if MongoDB fails
                 try {
-                    const usageData = await kv.get('resume_usage_count');
-                    const count = usageData ? parseInt(usageData) : 0;
-                    setUsageCount(count);
+                    const countStr = await kv.get('resume_usage_count');
+                    const maxStr = await kv.get('resume_max_usage');
+                    const planStr = await kv.get('resume_plan');
+                    const count = countStr ? parseInt(countStr) : 0;
+                    const max = maxStr ? parseInt(maxStr) : DEFAULT_FREE_PLAN_LIMIT;
+                    setUsageCount(Number.isFinite(count) ? count : 0);
+                    setMaxUsage(Number.isFinite(max) ? max : DEFAULT_FREE_PLAN_LIMIT);
+                    if (typeof planStr === 'string') setUserPlan(planStr);
                 } catch (kvError) {
                     console.error('Fallback KV also failed:', kvError);
                 }
@@ -69,7 +82,11 @@ const Upload = () => {
             // Check usage limit from MongoDB
             try {
                 const usageData = await checkUsageLimit(auth.user.uuid);
-                if (!usageData.canAnalyze) {
+                // Update local counters from server authoritative values
+                setUsageCount(usageData.currentUsage);
+                setMaxUsage(usageData.maxUsage);
+                // If limit reached for finite plan
+                if (!usageData.canAnalyze && usageData.maxUsage !== -1) {
                     setShowUpgradeModal(true);
                     return;
                 }
@@ -201,11 +218,16 @@ const Upload = () => {
             
             // Increment usage count in MongoDB
             try {
-                await incrementUsageCount(auth.user!.uuid);
-                const newUsageCount = usageCount + 1;
-                setUsageCount(newUsageCount);
-                
-                // Also save to MongoDB
+                // Increment usage first
+                const incOk = await incrementUsageCount(auth.user!.uuid);
+                if (!incOk) {
+                    console.warn('Usage increment failed; will still proceed');
+                }
+                // Fetch fresh usage from server to avoid drift
+                const fresh = await checkUsageLimit(auth.user!.uuid);
+                setUsageCount(fresh.currentUsage);
+                setMaxUsage(fresh.maxUsage);
+
                 await saveResumeToMongoDB({
                     id: uuid,
                     puterId: auth.user!.uuid,
@@ -218,8 +240,7 @@ const Upload = () => {
                 });
                 console.log('✅ Resume saved to MongoDB');
             } catch (mongoError) {
-                console.error('MongoDB save failed, falling back to Puter KV:', mongoError);
-                // Fallback to Puter KV
+                console.error('MongoDB usage/save failed, falling back to Puter KV:', mongoError);
                 const newUsageCount = usageCount + 1;
                 await kv.set('resume_usage_count', newUsageCount.toString());
                 setUsageCount(newUsageCount);
@@ -376,7 +397,7 @@ const Upload = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0 pt-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm font-semibold text-slate-900">AI Analysis</p>
+                                                        <p className="text-sm font-semibold text-slate-900">Analysis</p>
                                                         {progress >= 70 && progress < 90 && (
                                                             <div className="flex items-center gap-1.5">
                                                                 <div className="flex gap-1">
@@ -439,7 +460,7 @@ const Upload = () => {
                         </div>
                     ) : (
                         <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto px-2">
-                            Add your job details and upload your resume for personalized AI-powered feedback
+                            Add job details (optional) and upload your resume for simple feedback.
                         </p>
                     )}
                 </div>
@@ -663,7 +684,7 @@ const Upload = () => {
                                     Sign Up to Get Started
                                 </h3>
                                 <p className="text-slate-600 text-lg">
-                                    Create an account to analyze your resume with AI-powered feedback!
+                                    Create an account to analyze your resume and get simple feedback.
                                 </p>
                             </div>
 
@@ -701,7 +722,7 @@ const Upload = () => {
                             {/* CTA Buttons */}
                             <div className="space-y-3 pt-4">
                                 <button
-                                    onClick={() => navigate('/hirelens/auth?next=/hirelens/upload')}
+                                    onClick={() => navigate('/login?next=/hirelens/upload')}
                                     className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg rounded-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-3"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -819,7 +840,7 @@ const Upload = () => {
                                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                 </svg>
-                                <span>Analyze Resume with AI</span>
+                                <span>Analyze resume</span>
                             </button>
 
                             {/* Privacy & Tips */}
@@ -871,11 +892,11 @@ const Upload = () => {
                             <span className="text-sm font-semibold text-slate-700">
                                 {maxUsage === -1 ? (
                                     <>
-                                        <span className="text-purple-600">{usageCount}</span> / ∞ {userPlan === 'pro' ? 'Pro' : userPlan === 'enterprise' ? 'Enterprise' : 'Free'} Analyses
+                                        <span className="text-purple-600">{usageCount}</span> / ∞ {userPlan === 'pro' ? 'Pro' : userPlan === 'enterprise' ? 'Enterprise' : 'Free'}
                                     </>
                                 ) : (
                                     <>
-                                        <span className="text-purple-600">{maxUsage - usageCount}</span> Remaining of {maxUsage} {userPlan === 'pro' ? 'Pro' : 'Free'} Analyses
+                                        <span className="text-purple-600">{Math.max(maxUsage - usageCount, 0)}</span> left of {maxUsage} {userPlan === 'pro' ? 'Pro' : 'Free'}
                                     </>
                                 )}
                             </span>

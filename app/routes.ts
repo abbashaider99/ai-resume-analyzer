@@ -6,6 +6,8 @@ export default [
     route('/contact', 'routes/contact.tsx'),
     route('/bmi-calculator', 'routes/bmi-calculator.tsx'),
     route('/website-checker', 'routes/website-checker.tsx'),
+    // Global login route
+    route('/login', 'routes/login.tsx'),
     // Resource route for pricing API used by Website Checker (path normalized to /api/pricing)
     route('/api/pricing', 'routes/api.pricing.ts'),
     route('/wipe', 'routes/wipe.tsx'),

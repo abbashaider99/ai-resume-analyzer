@@ -13,7 +13,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (!auth.isAuthenticated || !auth.user) {
-            navigate('/hirelens/auth?next=/dashboard');
+            navigate(`/login?next=/dashboard`);
             return;
         }
 
@@ -55,9 +55,9 @@ const Dashboard = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-slate-900 mb-2">
-                        Welcome back, <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{auth.user?.username}</span>! 👋
+                        Hi <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{auth.user?.username}</span>
                     </h1>
-                    <p className="text-lg text-slate-600">Here's your resume analysis dashboard</p>
+                    <p className="text-lg text-slate-600">Your recent activity</p>
                 </div>
 
                 {/* Stats Cards */}
