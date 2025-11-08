@@ -6,6 +6,8 @@ export default [
     route('/contact', 'routes/contact.tsx'),
     route('/bmi-calculator', 'routes/bmi-calculator.tsx'),
     route('/website-checker', 'routes/website-checker.tsx'),
+    // Alias route for ATS checker (same UI)
+    route('/ats-checker', 'routes/website-checker.tsx'),
     route('/wipe', 'routes/wipe.tsx'),
     route('/dashboard', 'routes/dashboard.tsx'),
     route('/my-account', 'routes/my-account.tsx'),
