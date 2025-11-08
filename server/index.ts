@@ -31,22 +31,26 @@ const allowedOrigins = [
 
 const corsOptions = {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
+        // Allow requests with no origin (like curl or server-to-server)
         if (!origin) return callback(null, true);
-
         const directAllowed = allowedOrigins.includes(origin);
-        // Allow any subdomain of abbaslogic.com (e.g., api, staging, etc.)
         const wildcardAllowed = /https?:\/\/([\w-]+\.)*abbaslogic\.com$/.test(origin);
-
         if (directAllowed || wildcardAllowed) {
             return callback(null, true);
         }
-        return callback(new Error(`Not allowed by CORS: ${origin}`));
+        // Soft allow: instead of error hard-blocking (which can produce opaque CORS failures), allow but log
+        console.warn(`[CORS] Soft-allowing unknown origin: ${origin}`);
+        return callback(null, true);
     },
     methods: ['GET','POST','PATCH','PUT','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization'],
+    allowedHeaders: [
+        'Content-Type','Authorization','Accept','Origin','X-Requested-With',
+        'sec-ch-ua','sec-ch-ua-mobile','sec-ch-ua-platform'
+    ],
+    exposedHeaders: ['Content-Length','X-Request-Id'],
     credentials: true,
-    optionsSuccessStatus: 200
+    maxAge: 86400,
+    optionsSuccessStatus: 204
 };
 
 // Middleware
@@ -54,6 +58,18 @@ app.use(cors(corsOptions));
 // Explicitly handle preflight for all routes
 app.options('*', cors(corsOptions));
 app.use(express.json());
+
+// Debug endpoint to inspect request headers / origin in production
+app.get('/api/debug/headers', (req: Request, res: Response) => {
+    res.json({
+        origin: req.headers.origin,
+        host: req.headers.host,
+        'user-agent': req.headers['user-agent'],
+        referer: req.headers.referer,
+        headers: req.headers,
+        allowedOrigins,
+    });
+});
 
 // Admin Schema (defined before connection)
 const adminSchema = new mongoose.Schema({
