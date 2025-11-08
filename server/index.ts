@@ -301,10 +301,19 @@ app.post('/api/users/:puterId/usage', async (req, res) => {
     try {
         const { puterId } = req.params;
 
-        const user = await User.findOne({ puterId });
+        let user = await User.findOne({ puterId });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Auto-create missing user as free plan to avoid client race conditions
+            user = new User({
+                puterId,
+                username: puterId, // fallback until proper sync provides username
+                plan: 'free',
+                usageCount: 0,
+                maxUsage: FREE_PLAN_LIMIT,
+            });
+            await user.save();
+            console.log(`🆕 Auto-created user during usage increment: ${puterId}`);
         }
 
         user.usageCount += 1;
@@ -387,10 +396,19 @@ app.post('/api/resumes', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const user = await User.findOne({ puterId });
+        let user = await User.findOne({ puterId });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Auto-create missing user as free plan
+            user = new User({
+                puterId,
+                username: puterId,
+                plan: 'free',
+                usageCount: 0,
+                maxUsage: FREE_PLAN_LIMIT,
+            });
+            await user.save();
+            console.log(`🆕 Auto-created user during resume save: ${puterId}`);
         }
 
         // Check if resume already exists

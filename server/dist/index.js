@@ -84,9 +84,32 @@ mongoose.connect(MONGODB_URI)
     .then(async () => {
     console.log('✅ Connected to MongoDB');
     await initializeDefaultAdmin();
+    // One-time / continuous lightweight migration for inconsistent usage limits
+    try {
+        const updated = await User.updateMany({
+            plan: 'free',
+            $or: [
+                { maxUsage: { $exists: false } },
+                { maxUsage: { $lte: 0 } },
+                { maxUsage: { $gt: FREE_PLAN_LIMIT } }
+            ]
+        }, { $set: { maxUsage: FREE_PLAN_LIMIT } });
+        if (updated.modifiedCount) {
+            console.log(`🔧 Migrated ${updated.modifiedCount} free user(s) to maxUsage=${FREE_PLAN_LIMIT}`);
+        }
+        // Normalize any pro/enterprise users accidentally capped (should be -1)
+        const proFix = await User.updateMany({ plan: { $in: ['pro', 'enterprise'] }, maxUsage: { $ne: -1 } }, { $set: { maxUsage: -1 } });
+        if (proFix.modifiedCount) {
+            console.log(`🔧 Corrected ${proFix.modifiedCount} paid user(s) to unlimited maxUsage=-1`);
+        }
+    }
+    catch (mErr) {
+        console.error('Migration error (usage limits):', mErr);
+    }
 })
     .catch((err) => console.error('❌ MongoDB connection error:', err));
 // User Schema
+const FREE_PLAN_LIMIT = 3;
 const userSchema = new mongoose.Schema({
     puterId: { type: String, required: true, unique: true, index: true },
     username: { type: String, required: true },
@@ -97,7 +120,7 @@ const userSchema = new mongoose.Schema({
         default: 'free'
     },
     usageCount: { type: Number, default: 0 },
-    maxUsage: { type: Number, default: 5 }, // Free plan: 5, Pro: unlimited
+    maxUsage: { type: Number, default: FREE_PLAN_LIMIT }, // Free plan: 3, Pro/Enterprise: unlimited (-1)
     resumes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Resume' }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
@@ -132,14 +155,14 @@ app.post('/api/users/sync', async (req, res) => {
         // Find or create user
         let user = await User.findOne({ puterId });
         if (!user) {
-            // Create new user
+            // Create new user (free plan limit unified to FREE_PLAN_LIMIT)
             user = new User({
                 puterId,
                 username,
                 email,
                 plan: 'free',
                 usageCount: 0,
-                maxUsage: 5,
+                maxUsage: FREE_PLAN_LIMIT,
             });
             await user.save();
             console.log(`✅ New user created: ${username} (${puterId})`);
@@ -149,6 +172,10 @@ app.post('/api/users/sync', async (req, res) => {
             user.username = username;
             if (email)
                 user.email = email;
+            // Auto-migrate legacy free users with old limit > FREE_PLAN_LIMIT
+            if (user.plan === 'free' && (user.maxUsage === 5 || user.maxUsage > FREE_PLAN_LIMIT)) {
+                user.maxUsage = FREE_PLAN_LIMIT;
+            }
             user.updatedAt = new Date();
             await user.save();
             console.log(`✅ User updated: ${username} (${puterId})`);
@@ -188,7 +215,7 @@ app.patch('/api/users/:puterId/plan', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         user.plan = plan;
-        user.maxUsage = plan === 'free' ? 5 : -1; // -1 means unlimited
+        user.maxUsage = plan === 'free' ? FREE_PLAN_LIMIT : -1; // -1 means unlimited
         user.updatedAt = new Date();
         await user.save();
         console.log(`✅ User plan updated: ${user.username} -> ${plan}`);
@@ -247,12 +274,42 @@ app.get('/api/users/:puterId/usage-limit', async (req, res) => {
         const { puterId } = req.params;
         const user = await User.findOne({ puterId });
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Fail-open: if user missing treat as new free user with baseline limits
+            return res.json({
+                canAnalyze: true,
+                currentUsage: 0,
+                maxUsage: FREE_PLAN_LIMIT,
+                plan: 'free'
+            });
         }
-        const canAnalyze = user.plan === 'pro' || user.plan === 'enterprise'
+        // Normalize invalid states before responding
+        if (user.plan === 'free' && (typeof user.maxUsage !== 'number' || user.maxUsage <= 0 || user.maxUsage > FREE_PLAN_LIMIT)) {
+            user.maxUsage = FREE_PLAN_LIMIT;
+        }
+        if ((user.plan === 'pro' || user.plan === 'enterprise') && user.maxUsage !== -1) {
+            user.maxUsage = -1;
+        }
+        if (typeof user.usageCount !== 'number' || user.usageCount < 0) {
+            user.usageCount = 0;
+        }
+        if (user.isModified()) {
+            user.updatedAt = new Date();
+            await user.save();
+        }
+        const canAnalyze = (user.plan === 'pro' || user.plan === 'enterprise')
             ? true
             : user.usageCount < user.maxUsage;
-        res.json({
+        // Defensive: ensure free users never show reached at zero
+        if (user.plan === 'free' && user.usageCount === 0) {
+            // Force canAnalyze true even if inconsistent state persists
+            return res.json({
+                canAnalyze: true,
+                currentUsage: 0,
+                maxUsage: user.maxUsage,
+                plan: user.plan,
+            });
+        }
+        return res.json({
             canAnalyze,
             currentUsage: user.usageCount,
             maxUsage: user.maxUsage,

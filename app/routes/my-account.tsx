@@ -103,13 +103,13 @@ const MyAccount = () => {
                         <div className="p-4 bg-slate-50 rounded-xl">
                             <p className="text-sm text-slate-600 mb-1">Analyses Used</p>
                             <p className="text-2xl font-bold text-slate-900">
-                                {userData?.usageCount || 0} / {userData?.maxUsage === -1 ? '∞' : userData?.maxUsage || 5}
+                                {userData?.usageCount || 0} / {userData?.maxUsage === -1 ? '∞' : (userData?.maxUsage ?? 3)}
                             </p>
                             {userData?.maxUsage !== -1 && (
                                 <div className="mt-3 w-full bg-slate-200 rounded-full h-2">
                                     <div 
                                         className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
-                                        style={{ width: `${Math.min(((userData?.usageCount || 0) / (userData?.maxUsage || 5)) * 100, 100)}%` }}
+                                        style={{ width: `${Math.min(((userData?.usageCount || 0) / (userData?.maxUsage ?? 3)) * 100, 100)}%` }}
                                     ></div>
                                 </div>
                             )}
@@ -117,7 +117,7 @@ const MyAccount = () => {
                         <div className="p-4 bg-slate-50 rounded-xl">
                             <p className="text-sm text-slate-600 mb-1">Remaining Analyses</p>
                             <p className="text-2xl font-bold text-slate-900">
-                                {userData?.maxUsage === -1 ? '∞' : Math.max((userData?.maxUsage || 5) - (userData?.usageCount || 0), 0)}
+                                {userData?.maxUsage === -1 ? '∞' : Math.max((userData?.maxUsage ?? 3) - (userData?.usageCount || 0), 0)}
                             </p>
                             <p className="text-xs text-slate-500 mt-2">
                                 {userData?.plan === 'free' ? 'Upgrade for unlimited' : 'Unlimited analyses'}

@@ -36,6 +36,23 @@ const API_BASE_URL = (
 );
 
 /**
+ * Diagnostic: fetch server debug headers echo endpoint (if enabled on server)
+ * Returns origin/cors related response headers to help troubleshoot why writes may not persist.
+ */
+export async function fetchDebugHeaders(): Promise<Record<string, string>> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/debug/headers`);
+        const headers: Record<string, string> = {};
+        response.headers.forEach((value, key) => { headers[key] = value; });
+        headers.__status = String(response.status);
+        return headers;
+    } catch (error) {
+        console.error('Error fetching debug headers:', error);
+        return { error: 'network-failure' };
+    }
+}
+
+/**
  * Sync Puter user to MongoDB
  * Call this after user signs in or when you need to sync user data
  */

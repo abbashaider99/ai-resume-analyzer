@@ -117,12 +117,15 @@ const Hero = () => (
 
       {/* Main Heading */}
       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
-        Helpful tools for work
+        Powerful AI Tools for
+        <span className="block bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mt-2">
+          Modern Professionals
+        </span>
       </h1>
 
       {/* Subtitle */}
       <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-        Simple, useful tools to save time and get things done.
+        Unlock your potential with our suite of AI-powered tools designed to boost productivity, enhance security, and improve your professional workflow.
       </p>
 
       {/* CTA Buttons */}
