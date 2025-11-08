@@ -10,7 +10,7 @@
 ### ✅ Domain Configuration
 - **Primary Domain**: `abbaslogic.com`
 - **API Endpoint**: `https://api.abbaslogic.com/api`
-- **CORS**: Configured for production domain
+- **CORS**: Configured for production domain + wildcard subdomains (`*.abbaslogic.com`) and extendable via `CORS_ORIGIN`
 
 ---
 
@@ -142,6 +142,7 @@ VITE_API_BASE_URL=https://api.abbaslogic.com/api
 MONGODB_URI=mongodb+srv://dailylifetech23:G0sg67UnyQg4vyK6@cluster0.7daxcbm.mongodb.net/abbaslogicdb?retryWrites=true&w=majority&appName=Cluster0
 PORT=3000
 NODE_ENV=production
+CORS_ORIGIN= # optional extra origins comma-separated
 ```
 
 ---
@@ -202,8 +203,9 @@ pm2 restart ai-resume-api
 ### Common Issues:
 
 1. **CORS Error**
-   - Check `allowedOrigins` in `server/index.ts`
-   - Verify domain matches exactly (with/without www)
+   - Confirm origin appears in `allowedOrigins` or matches wildcard `*.abbaslogic.com`
+   - Set `CORS_ORIGIN` in environment if adding non-standard origin(s)
+   - Ensure preflight (OPTIONS) returns 200 (already configured)
 
 2. **MongoDB Connection Failed**
    - Verify connection string in environment variables

@@ -27,9 +27,13 @@ interface ResumeData {
 }
 
 // API endpoint URL - pointing to separate Express server
-// For production (abbaslogic.com), set VITE_API_BASE_URL=https://api.abbaslogic.com/api
-// For local development, it defaults to http://localhost:3000/api
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.abbaslogic.com/api';
+// For production (abbaslogic.com), prefer VITE_API_BASE_URL=https://api.abbaslogic.com/api
+// Fallbacks: same-origin /api when running behind a reverse proxy, else local dev
+const API_BASE_URL = (
+    import.meta.env.VITE_API_BASE_URL
+    || (typeof window !== 'undefined' ? `${window.location.origin.replace(/\/$/, '')}/api` : '')
+    || 'http://localhost:3000/api'
+);
 
 /**
  * Sync Puter user to MongoDB
