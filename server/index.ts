@@ -98,17 +98,18 @@ mongoose.connect(MONGODB_URI)
     .catch((err: Error) => console.error('❌ MongoDB connection error:', err));
 
 // User Schema
+const FREE_PLAN_LIMIT = 3;
 const userSchema = new mongoose.Schema({
     puterId: { type: String, required: true, unique: true, index: true },
     username: { type: String, required: true },
     email: { type: String },
-    plan: { 
-        type: String, 
-        enum: ['free', 'pro', 'enterprise'], 
-        default: 'free' 
+    plan: {
+        type: String,
+        enum: ['free', 'pro', 'enterprise'],
+        default: 'free'
     },
     usageCount: { type: Number, default: 0 },
-    maxUsage: { type: Number, default: 5 }, // Free plan: 5, Pro: unlimited
+    maxUsage: { type: Number, default: FREE_PLAN_LIMIT }, // Free plan: 3, Pro/Enterprise: unlimited (-1)
     resumes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Resume' }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
@@ -152,14 +153,14 @@ app.post('/api/users/sync', async (req: Request, res: Response) => {
         let user = await User.findOne({ puterId });
 
         if (!user) {
-            // Create new user
+            // Create new user (free plan limit unified to FREE_PLAN_LIMIT)
             user = new User({
                 puterId,
                 username,
                 email,
                 plan: 'free',
                 usageCount: 0,
-                maxUsage: 5,
+                maxUsage: FREE_PLAN_LIMIT,
             });
             await user.save();
             console.log(`✅ New user created: ${username} (${puterId})`);
@@ -167,6 +168,10 @@ app.post('/api/users/sync', async (req: Request, res: Response) => {
             // Update existing user
             user.username = username;
             if (email) user.email = email;
+            // Auto-migrate legacy free users with old limit > FREE_PLAN_LIMIT
+            if (user.plan === 'free' && (user.maxUsage === 5 || user.maxUsage > FREE_PLAN_LIMIT)) {
+                user.maxUsage = FREE_PLAN_LIMIT;
+            }
             user.updatedAt = new Date();
             await user.save();
             console.log(`✅ User updated: ${username} (${puterId})`);
@@ -213,8 +218,8 @@ app.patch('/api/users/:puterId/plan', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        user.plan = plan;
-        user.maxUsage = plan === 'free' ? 5 : -1; // -1 means unlimited
+    user.plan = plan;
+    user.maxUsage = plan === 'free' ? FREE_PLAN_LIMIT : -1; // -1 means unlimited
         user.updatedAt = new Date();
         await user.save();
 

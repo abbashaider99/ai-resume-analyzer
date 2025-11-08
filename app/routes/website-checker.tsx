@@ -2222,11 +2222,16 @@ Format as JSON:
                 </div>
               ) : result ? (
                 <div ref={resultRef} className="animate-fade-in" id="print-section">
-                  {/* Check if domain is not registered AND website doesn't exist */}
-                  {result.registrationDate === "Information not available" && 
-                   result.domainAge === "Information not available" && 
-                   result.protocol === "HTTP (Unsecured)" &&
-                   !result.sslStatus?.includes("Valid") ? (
+                  {/* Show domain purchase card if domain appears unregistered */}
+                  {(() => {
+                    const unavailableValues = ["Information not available", "Unknown", null, undefined];
+                    const noRegDate = unavailableValues.includes(result.registrationDate as any);
+                    const noAge = unavailableValues.includes(result.domainAge as any);
+                    const insecure = result.protocol === "HTTP (Unsecured)" && !result.sslStatus?.includes("Valid");
+                    const noNameservers = !result.nameservers || result.nameservers.length === 0;
+                    const appearsUnregistered = noRegDate && noAge && (insecure || noNameservers);
+                    return appearsUnregistered;
+                  })() ? (
                     /* Domain Not Registered - Premium Design with Pricing */
                     <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-5 border border-slate-200">
                       <div className="overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-slate-50 border-2 border-blue-200">
