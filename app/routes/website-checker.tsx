@@ -123,7 +123,7 @@ export default function WebsiteChecker() {
       try {
         setPricingLoading(true);
         setPricingError(null);
-        const res = await fetch(`/api.pricing?domain=${encodeURIComponent(result.domainName!)}`);
+  const res = await fetch(`/api/pricing?domain=${encodeURIComponent(result.domainName!)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) {
