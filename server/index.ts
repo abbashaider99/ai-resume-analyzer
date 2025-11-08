@@ -311,7 +311,13 @@ app.get('/api/users/:puterId/usage-limit', async (req, res) => {
         const user = await User.findOne({ puterId });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Fail-open: if user missing treat as new free user with baseline limits
+            return res.json({
+                canAnalyze: true,
+                currentUsage: 0,
+                maxUsage: FREE_PLAN_LIMIT,
+                plan: 'free'
+            });
         }
 
         // Normalize invalid states before responding
@@ -329,11 +335,22 @@ app.get('/api/users/:puterId/usage-limit', async (req, res) => {
             await user.save();
         }
 
-        const canAnalyze = user.plan === 'pro' || user.plan === 'enterprise' 
-            ? true 
+        const canAnalyze = (user.plan === 'pro' || user.plan === 'enterprise')
+            ? true
             : user.usageCount < user.maxUsage;
 
-        res.json({
+        // Defensive: ensure free users never show reached at zero
+        if (user.plan === 'free' && user.usageCount === 0) {
+            // Force canAnalyze true even if inconsistent state persists
+            return res.json({
+                canAnalyze: true,
+                currentUsage: 0,
+                maxUsage: user.maxUsage,
+                plan: user.plan,
+            });
+        }
+
+        return res.json({
             canAnalyze,
             currentUsage: user.usageCount,
             maxUsage: user.maxUsage,

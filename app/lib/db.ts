@@ -242,10 +242,11 @@ export async function checkUsageLimit(puterId: string): Promise<{
         return data;
     } catch (error) {
         console.error('Error checking usage limit:', error);
+        // Fail-open: allow analyzing if server is unreachable, to avoid blocking users at 0
         return {
-            canAnalyze: false,
+            canAnalyze: true,
             currentUsage: 0,
-            maxUsage: 0,
+            maxUsage: 3,
             plan: 'free',
         };
     }
