@@ -6,10 +6,6 @@ export default [
     route('/contact', 'routes/contact.tsx'),
     route('/bmi-calculator', 'routes/bmi-calculator.tsx'),
     route('/website-checker', 'routes/website-checker.tsx'),
-    // Alias route for ATS checker (same UI)
-    route('/ats-checker', 'routes/website-checker.tsx'),
-    // Short alias
-    route('/ats', 'routes/website-checker.tsx'),
     // Resource route for pricing API used by Website Checker
     route('/api.pricing', 'routes/api.pricing.ts'),
     route('/wipe', 'routes/wipe.tsx'),
