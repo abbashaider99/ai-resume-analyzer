@@ -94,6 +94,27 @@ mongoose.connect(MONGODB_URI)
     .then(async () => {
         console.log('✅ Connected to MongoDB');
         await initializeDefaultAdmin();
+        // One-time / continuous lightweight migration for inconsistent usage limits
+        try {
+            const updated = await User.updateMany({
+                plan: 'free',
+                $or: [
+                    { maxUsage: { $exists: false } },
+                    { maxUsage: { $lte: 0 } },
+                    { maxUsage: { $gt: FREE_PLAN_LIMIT } }
+                ]
+            }, { $set: { maxUsage: FREE_PLAN_LIMIT } });
+            if (updated.modifiedCount) {
+                console.log(`🔧 Migrated ${updated.modifiedCount} free user(s) to maxUsage=${FREE_PLAN_LIMIT}`);
+            }
+            // Normalize any pro/enterprise users accidentally capped (should be -1)
+            const proFix = await User.updateMany({ plan: { $in: ['pro','enterprise'] }, maxUsage: { $ne: -1 } }, { $set: { maxUsage: -1 } });
+            if (proFix.modifiedCount) {
+                console.log(`🔧 Corrected ${proFix.modifiedCount} paid user(s) to unlimited maxUsage=-1`);
+            }
+        } catch (mErr) {
+            console.error('Migration error (usage limits):', mErr);
+        }
     })
     .catch((err: Error) => console.error('❌ MongoDB connection error:', err));
 
@@ -291,6 +312,21 @@ app.get('/api/users/:puterId/usage-limit', async (req, res) => {
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Normalize invalid states before responding
+        if (user.plan === 'free' && (typeof user.maxUsage !== 'number' || user.maxUsage <= 0 || user.maxUsage > FREE_PLAN_LIMIT)) {
+            user.maxUsage = FREE_PLAN_LIMIT;
+        }
+        if ((user.plan === 'pro' || user.plan === 'enterprise') && user.maxUsage !== -1) {
+            user.maxUsage = -1;
+        }
+        if (typeof user.usageCount !== 'number' || user.usageCount < 0) {
+            user.usageCount = 0;
+        }
+        if (user.isModified()) {
+            user.updatedAt = new Date();
+            await user.save();
         }
 
         const canAnalyze = user.plan === 'pro' || user.plan === 'enterprise' 
