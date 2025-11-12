@@ -1936,7 +1936,7 @@ Format as JSON:
 
   const translations = {
     en: {
-      title: "Website Legitimacy Checker",
+      title: "Website Authenticity Checker",
       subtitle: "AI-Powered Security Analysis",
       description: "Check if a website is safe and trustworthy before you visit or share personal information",
       inputLabel: "Website URL",
